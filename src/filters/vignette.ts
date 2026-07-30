@@ -35,6 +35,31 @@ export const vignette: FilterFactory<VignetteOptions> =
   /* @__PURE__ */ defineFilter<VignetteOptions>({
     name: 'vignette',
     defaults: { amount: 0.5, radius: 0.75, color: '#000000' },
+    fragment: `#version 300 es
+precision highp float;
+uniform sampler2D u_image;
+uniform vec2 u_resolution;
+uniform float u_amount;
+uniform float u_radius;
+uniform vec3 u_color;
+in vec2 v_texCoord;
+out vec4 outColor;
+void main() {
+  vec4 c = texture(u_image, v_texCoord);
+  vec2 pos = (v_texCoord - 0.5) * u_resolution;
+  float n = length(pos) / (0.5 * length(u_resolution));
+  float t = u_radius >= 1.0 ? 0.0 : smoothstep(u_radius, 1.0, n) * u_amount;
+  outColor = vec4(mix(c.rgb, u_color, t), c.a);
+}
+`,
+    uniforms: ({ amount = 0.5, radius = 0.75, color = '#000000' }) => {
+      const [r, g, b] = parseColor(color)
+      return {
+        u_amount: amount,
+        u_radius: Math.max(0, Math.min(1, radius)),
+        u_color: [r / 255, g / 255, b / 255],
+      }
+    },
     fallback: (pixels, { amount = 0.5, radius = 0.75, color = '#000000' }) => {
       if (amount <= 0) return undefined
       const [vr, vg, vb] = parseColor(color)

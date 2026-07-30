@@ -21,6 +21,23 @@ export type SepiaOptions = {
 export const sepia: FilterFactory<SepiaOptions> = /* @__PURE__ */ defineFilter<SepiaOptions>({
   name: 'sepia',
   defaults: { amount: 1 },
+  fragment: `#version 300 es
+precision highp float;
+uniform sampler2D u_image;
+uniform float u_amount;
+in vec2 v_texCoord;
+out vec4 outColor;
+void main() {
+  vec4 c = texture(u_image, v_texCoord);
+  vec3 s = vec3(
+    dot(c.rgb, vec3(0.393, 0.769, 0.189)),
+    dot(c.rgb, vec3(0.349, 0.686, 0.168)),
+    dot(c.rgb, vec3(0.272, 0.534, 0.131))
+  );
+  outColor = vec4(mix(c.rgb, min(s, 1.0), u_amount), c.a);
+}
+`,
+  uniforms: ({ amount = 1 }) => ({ u_amount: amount }),
   fallback: (pixels, { amount = 1 }) => {
     const { data } = pixels
     for (let i = 0; i < data.length; i += 4) {

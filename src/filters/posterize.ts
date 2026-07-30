@@ -21,6 +21,21 @@ export const posterize: FilterFactory<PosterizeOptions> =
   /* @__PURE__ */ defineFilter<PosterizeOptions>({
     name: 'posterize',
     defaults: { levels: 4 },
+    fragment: `#version 300 es
+precision highp float;
+uniform sampler2D u_image;
+uniform float u_steps;
+in vec2 v_texCoord;
+out vec4 outColor;
+void main() {
+  vec4 c = texture(u_image, v_texCoord);
+  vec3 q = floor(c.rgb * u_steps + 0.5) / u_steps;
+  outColor = vec4(q, c.a);
+}
+`,
+    uniforms: ({ levels = 4 }) => ({
+      u_steps: Math.max(2, Math.min(255, Math.floor(levels))) - 1,
+    }),
     fallback: (pixels, { levels = 4 }) => {
       const n = Math.max(2, Math.min(255, Math.floor(levels)))
       const step = 255 / (n - 1)

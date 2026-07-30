@@ -21,6 +21,27 @@ export type DuotoneOptions = {
  */
 export const duotone: FilterFactory<DuotoneOptions> = /* @__PURE__ */ defineFilter<DuotoneOptions>({
   name: 'duotone',
+  fragment: `#version 300 es
+precision highp float;
+uniform sampler2D u_image;
+uniform vec3 u_shadows;
+uniform vec3 u_highlights;
+in vec2 v_texCoord;
+out vec4 outColor;
+void main() {
+  vec4 c = texture(u_image, v_texCoord);
+  float t = dot(c.rgb, vec3(0.2126, 0.7152, 0.0722));
+  outColor = vec4(mix(u_shadows, u_highlights, t), c.a);
+}
+`,
+  uniforms: ({ shadows, highlights }) => {
+    const s = parseColor(shadows)
+    const h = parseColor(highlights)
+    return {
+      u_shadows: [s[0] / 255, s[1] / 255, s[2] / 255],
+      u_highlights: [h[0] / 255, h[1] / 255, h[2] / 255],
+    }
+  },
   fallback: (pixels, { shadows, highlights }) => {
     const [sr, sg, sb] = parseColor(shadows)
     const [hr, hg, hb] = parseColor(highlights)
