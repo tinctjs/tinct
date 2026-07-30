@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <!-- Tinct — "The Dip": an image swatch half-submerged in dye (tinctus = dipped). -->
+  <defs>
+    <linearGradient id="dye" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#4f46e5"/>
+      <stop offset="0.55" stop-color="#c026d3"/>
+      <stop offset="1" stop-color="#ec4899"/>
+    </linearGradient>
+    <clipPath id="frame"><rect x="12" y="12" width="72" height="72" rx="18"/></clipPath>
+  </defs>
+  <rect x="12" y="12" width="72" height="72" rx="18" fill="#1c1a33"/>
+  <g clip-path="url(#frame)">
+    <path d="M8 56 Q 20 48 32 56 T 56 56 T 80 56 T 104 56 V 96 H 8 Z" fill="url(#dye)"/>
+  </g>
+</svg>
