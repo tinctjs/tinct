@@ -161,6 +161,12 @@ Use a scene-graph library for interactive canvas apps, and sharp for servers.
 See [CONTRIBUTING.md](./CONTRIBUTING.md). Architecture notes live in
 [docs/architecture.md](./docs/architecture.md).
 
+## Credits
+
+Tinct's design owes a lot of its ideas and learnings to
+[Javed Ahmed](mailto:mjavedahmed4@gmail.com) and
+[Junaid Qadir](mailto:junaidqadirb@gmail.com).
+
 ## License
 
 [MIT](./LICENSE)

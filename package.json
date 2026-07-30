@@ -6,6 +6,10 @@
   "sideEffects": false,
   "license": "MIT",
   "author": "Azeem Hassni <azeemhassni@gmail.com>",
+  "contributors": [
+    "Javed Ahmed <mjavedahmed4@gmail.com>",
+    "Junaid Qadir <junaidqadirb@gmail.com>"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/azeemhassni/tinct.git"
