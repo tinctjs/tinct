@@ -17,6 +17,7 @@ import type {
   Unsubscribe,
 } from './types'
 import { FILTER_DEFINITION, type Filter, type FilterDefinition, type FilterOptions } from './filter'
+import { resolveCrop, resolveResize, rotateBounds } from './geometry-math'
 
 /** @internal Pixel source a pipeline starts from. Concrete decoding lives in `io/`. */
 export interface SourceState {
@@ -231,42 +232,20 @@ export class TinctImage {
   }
 }
 
-/** @internal Resolve a pixel-or-percent value against a reference dimension. */
-function px(value: number | `${number}%`, reference: number): number {
-  return typeof value === 'number' ? value : (parseFloat(value) / 100) * reference
-}
-
 /** @internal Dimension propagation for a single op. */
 function opSize(node: OpNode, w: number, h: number): [number, number] {
   switch (node.op) {
     case 'crop': {
-      const p = node.params
-      if ('aspect' in p) {
-        const aspect =
-          typeof p.aspect === 'number'
-            ? p.aspect
-            : (([aw, ah]) => Number(aw) / Number(ah))(p.aspect.split(':'))
-        const cw = Math.min(w, h * aspect)
-        return [Math.round(cw), Math.round(cw / aspect)]
-      }
-      return [Math.round(px(p.width, w)), Math.round(px(p.height, h))]
+      const rect = resolveCrop(node.params, w, h)
+      return [rect.width, rect.height]
     }
     case 'resize': {
-      const { width, height, fit = 'contain' } = node.params
-      if (width !== undefined && height !== undefined) {
-        if (fit === 'fill') return [width, height]
-        const scale = (fit === 'cover' ? Math.max : Math.min)(width / w, height / h)
-        return fit === 'cover' ? [width, height] : [Math.round(w * scale), Math.round(h * scale)]
-      }
-      if (width !== undefined) return [width, Math.round((h / w) * width)]
-      if (height !== undefined) return [Math.round((w / h) * height), height]
-      return [w, h]
+      const { out } = resolveResize(node.params, w, h)
+      return [out.width, out.height]
     }
     case 'rotate': {
-      const rad = (node.params.angle * Math.PI) / 180
-      const cos = Math.abs(Math.cos(rad))
-      const sin = Math.abs(Math.sin(rad))
-      return [Math.round(w * cos + h * sin), Math.round(w * sin + h * cos)]
+      const bounds = rotateBounds(node.params.angle, w, h)
+      return [bounds.width, bounds.height]
     }
     default:
       return [w, h]
