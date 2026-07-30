@@ -20,7 +20,14 @@ export type PixelValue = number | Percent
 
 /**
  * Anchor position used when a crop region is derived from an aspect ratio.
- * Compass names: `'north'` is the top edge, `'south-east'` the bottom-right corner.
+ * Compass names: `'north'` is the top edge, `'south-east'` the bottom-right
+ * corner.
+ *
+ * `'face'` is content-aware: the crop window is placed over the most likely
+ * face (deterministic skin-region heuristic with a saliency fallback — no
+ * platform APIs, identical results in every browser). It requires calling
+ * `enableFaceGravity()` from `tinctjs/face` so the detector ships in your
+ * bundle; rendering without it throws a descriptive error.
  */
 export type Gravity =
   | 'center'
@@ -32,6 +39,7 @@ export type Gravity =
   | 'north-west'
   | 'south-east'
   | 'south-west'
+  | 'face'
 
 /** An aspect ratio, as a `'16:9'` style string or a width/height quotient (e.g. `16 / 9`). */
 export type AspectRatio = `${number}:${number}` | number

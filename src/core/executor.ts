@@ -120,7 +120,7 @@ function toGpuPass(node: OpNode): QueuedPass | null {
 function runCpuOp(pixels: PixelData, node: OpNode): PixelData {
   switch (node.op) {
     case 'crop':
-      return cropPixels(pixels, resolveCrop(node.params, pixels.width, pixels.height))
+      return cropPixels(pixels, resolveCrop(node.params, pixels.width, pixels.height, pixels))
     case 'resize': {
       const plan = resolveResize(node.params, pixels.width, pixels.height)
       const scaled = resample(pixels, plan.scaled.width, plan.scaled.height, node.params.kernel)

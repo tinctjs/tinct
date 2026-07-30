@@ -11,7 +11,20 @@
 import type { PixelData } from './pixel'
 import type { OpNode, ProgressFn } from './executor'
 import type { RenderRequest, RenderResponse } from './render-worker'
+import { gravityRegistry } from './gravity'
 import { BUILTIN_FILTER_NAMES } from '../filters/names'
+
+const COMPASS_GRAVITIES = new Set([
+  'center',
+  'north',
+  'south',
+  'east',
+  'west',
+  'north-east',
+  'north-west',
+  'south-east',
+  'south-west',
+])
 
 /** Offload only when there is enough work to beat the copy + startup cost. */
 const MIN_PIXELS = 1 << 18 // 512×512
@@ -22,8 +35,17 @@ export function shouldUseWorker(ops: readonly OpNode[], source: PixelData): bool
   if (ops.length === 0) return false
   if (source.width * source.height < MIN_PIXELS) return false
   // Custom filters carry live functions that cannot cross threads; the
-  // worker bundles the built-ins only.
-  return ops.every((op) => op.op !== 'filter' || BUILTIN_FILTER_NAMES.includes(op.params.name))
+  // worker bundles the built-ins only. Content-aware gravities must also be
+  // registered locally, so main-thread and worker renders agree on whether
+  // the pipeline is valid.
+  return ops.every((op) => {
+    if (op.op === 'filter') return BUILTIN_FILTER_NAMES.includes(op.params.name)
+    if (op.op === 'crop' && 'aspect' in op.params) {
+      const gravity = op.params.gravity ?? 'center'
+      return COMPASS_GRAVITIES.has(gravity) || gravityRegistry.has(gravity)
+    }
+    return true
+  })
 }
 
 interface PendingRender {

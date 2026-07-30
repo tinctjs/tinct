@@ -8,6 +8,8 @@
  */
 
 import type { CropOptions, Gravity, PixelValue, ResizeOptions } from './types'
+import type { PixelData } from './pixel'
+import { gravityRegistry } from './gravity'
 
 /** @internal An integer pixel rectangle. */
 export interface Rect {
@@ -29,7 +31,7 @@ export function resolveAspect(aspect: `${number}:${number}` | number): number {
   return Number(w) / Number(h)
 }
 
-const GRAVITY_X: Record<Gravity, number> = {
+const GRAVITY_X: Partial<Record<Gravity, number>> = {
   center: 0.5,
   north: 0.5,
   south: 0.5,
@@ -41,7 +43,7 @@ const GRAVITY_X: Record<Gravity, number> = {
   'south-west': 0,
 }
 
-const GRAVITY_Y: Record<Gravity, number> = {
+const GRAVITY_Y: Partial<Record<Gravity, number>> = {
   center: 0.5,
   north: 0,
   south: 1,
@@ -56,8 +58,17 @@ const GRAVITY_Y: Record<Gravity, number> = {
 /**
  * @internal
  * Resolve any `CropOptions` form into an integer rect clamped to the image.
+ *
+ * `pixels` is provided at render time so content-aware gravities can look at
+ * the image; dimension-only queries omit it (gravity never changes the
+ * output size, so `image.width`/`.height` stay exact regardless).
  */
-export function resolveCrop(options: CropOptions, width: number, height: number): Rect {
+export function resolveCrop(
+  options: CropOptions,
+  width: number,
+  height: number,
+  pixels?: PixelData,
+): Rect {
   let x: number
   let y: number
   let w: number
@@ -76,8 +87,30 @@ export function resolveCrop(options: CropOptions, width: number, height: number)
       h = width / aspect
     }
     const gravity = options.gravity ?? 'center'
-    x = (width - w) * GRAVITY_X[gravity]
-    y = (height - h) * GRAVITY_Y[gravity]
+    const gx = GRAVITY_X[gravity]
+    const gy = GRAVITY_Y[gravity]
+    if (gx !== undefined && gy !== undefined) {
+      x = (width - w) * gx
+      y = (height - h) * gy
+    } else if (pixels === undefined) {
+      // Dimension-only query: placement is irrelevant, size is exact.
+      x = (width - w) / 2
+      y = (height - h) / 2
+    } else {
+      const resolver = gravityRegistry.get(gravity)
+      if (!resolver) {
+        throw new Error(
+          `tinct: gravity '${gravity}' is not registered — for 'face', import and call enableFaceGravity() from 'tinctjs/face' so the detector is included in your bundle`,
+        )
+      }
+      const origin = resolver(pixels, Math.round(w), Math.round(h))
+      x = origin.x
+      y = origin.y
+    }
+    // The window size is fixed by the aspect ratio: shift out-of-bounds
+    // placements back inside rather than letting the shared clamp shrink them.
+    x = Math.max(0, Math.min(width - w, x))
+    y = Math.max(0, Math.min(height - h, y))
   } else {
     x = resolvePixelValue(options.x, width)
     y = resolvePixelValue(options.y, height)
