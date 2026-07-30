@@ -39,11 +39,26 @@ interface QueuedPass {
   cpu: (pixels: PixelData) => PixelData
 }
 
-/** @internal Execute `ops` over a copy of `source`; the source is never mutated. */
+/** @internal Rejection raised when a render is aborted. */
+export function abortError(signal: AbortSignal): unknown {
+  return (
+    (signal.reason as unknown) ??
+    (typeof DOMException !== 'undefined'
+      ? new DOMException('tinct: render aborted', 'AbortError')
+      : new Error('tinct: render aborted'))
+  )
+}
+
+/**
+ * @internal Execute `ops` over a copy of `source`; the source is never
+ * mutated. Aborts take effect at operation boundaries (a running kernel is
+ * never interrupted mid-buffer).
+ */
 export async function execute(
   source: PixelData,
   ops: readonly OpNode[],
   onProgress?: ProgressFn,
+  signal?: AbortSignal,
 ): Promise<PixelData> {
   const backend = getGpuBackend()
   let current = clonePixelData(source)
@@ -68,10 +83,12 @@ export async function execute(
   }
 
   for (let i = 0; i < ops.length; i++) {
+    if (signal?.aborted) throw abortError(signal)
     const node = ops[i]!
     onProgress?.(i / ops.length, node.op)
     // Yield so consumers' progress UI can update between heavy ops.
     await yieldToEventLoop()
+    if (signal?.aborted) throw abortError(signal)
 
     const gpuPass = backend ? toGpuPass(node) : null
     if (gpuPass) {

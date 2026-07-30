@@ -39,6 +39,7 @@ export type {
   Percent,
   PixelValue,
   ProgressEventData,
+  RenderOptions,
   ResizeBaseOptions,
   ResizeFit,
   ResizeKernel,

@@ -9,10 +9,15 @@
  */
 
 import type { PixelData } from './pixel'
-import type { OpNode, ProgressFn } from './executor'
+import { abortError, type OpNode, type ProgressFn } from './executor'
 import type { RenderRequest, RenderResponse } from './render-worker'
 import { gravityRegistry } from './gravity'
 import { BUILTIN_FILTER_NAMES } from '../filters/names'
+
+/** Abort reasons can be any value; promise rejections should be Errors. */
+function toError(reason: unknown): Error {
+  return reason instanceof Error ? reason : new Error(String(reason))
+}
 
 const COMPASS_GRAVITIES = new Set([
   'center',
@@ -104,17 +109,38 @@ export function renderInWorker(
   source: PixelData,
   ops: readonly OpNode[],
   onProgress?: ProgressFn,
+  signal?: AbortSignal,
 ): Promise<PixelData> {
   const target = getWorker()
   if (!target) return Promise.reject(new Error('tinct: no worker available'))
+  if (signal?.aborted) return Promise.reject(toError(abortError(signal)))
 
   return new Promise<PixelData>((resolve, reject) => {
     const id = nextId++
-    pending.set(id, { resolve, reject, onProgress })
+    const onAbort = (): void => {
+      // Reject locally and tell the worker to stop wasting cycles; a late
+      // 'done' for this id is ignored because the entry is gone.
+      pending.delete(id)
+      target.postMessage({ id, type: 'cancel' })
+      if (signal) reject(toError(abortError(signal)))
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+    pending.set(id, {
+      resolve: (pixels) => {
+        signal?.removeEventListener('abort', onAbort)
+        resolve(pixels)
+      },
+      reject: (error) => {
+        signal?.removeEventListener('abort', onAbort)
+        reject(error)
+      },
+      onProgress,
+    })
     // Copy the source so the transfer cannot detach the editor's own buffer.
     const copy = new Uint8ClampedArray(source.data)
     const request: RenderRequest = {
       id,
+      type: 'render',
       width: source.width,
       height: source.height,
       buffer: copy.buffer,

@@ -8,6 +8,7 @@ import type {
   AdjustOptions,
   CropOptions,
   ExportOptions,
+  RenderOptions,
   FlipAxis,
   JsonObject,
   ResizeOptions,
@@ -64,18 +65,20 @@ export class TinctImage {
    * (or any worker failure) renders locally. Public output methods and
    * tests build on this.
    */
-  async _render(): Promise<PixelData> {
+  async _render(signal?: AbortSignal): Promise<PixelData> {
     const emit = (pct: number, op: string): void => {
       for (const listener of this.#listeners.progress) listener({ pct, op })
     }
     if (shouldUseWorker(this.#ops, this.#source)) {
       try {
-        return await renderInWorker(this.#source, this.#ops, emit)
-      } catch {
-        // Graceful fallback: render on the main thread instead.
+        return await renderInWorker(this.#source, this.#ops, emit, signal)
+      } catch (error) {
+        // An abort is a deliberate stop — never fall back to a local render.
+        if (signal?.aborted) throw error
+        // Any other worker failure: render on the main thread instead.
       }
     }
-    return execute(this.#source, this.#ops, emit)
+    return execute(this.#source, this.#ops, emit, signal)
   }
 
   #derive(op: OpNode): TinctImage {
@@ -210,22 +213,22 @@ export class TinctImage {
 
   /** Render the pipeline and encode the result as a `Blob`. */
   async toBlob(options?: ExportOptions): Promise<Blob> {
-    return pixelsToBlob(await this._render(), options)
+    return pixelsToBlob(await this._render(options?.signal), options)
   }
 
   /** Render the pipeline and encode the result as a data URL string. */
   async toDataURL(options?: ExportOptions): Promise<string> {
-    return pixelsToDataURL(await this._render(), options)
+    return pixelsToDataURL(await this._render(options?.signal), options)
   }
 
   /** Render the pipeline and return raw pixels. */
-  async toImageData(): Promise<ImageData> {
-    return pixelsToImageData(await this._render())
+  async toImageData(options?: RenderOptions): Promise<ImageData> {
+    return pixelsToImageData(await this._render(options?.signal))
   }
 
   /** Render the pipeline into a fresh canvas element. */
-  async toCanvas(): Promise<HTMLCanvasElement> {
-    return pixelsToCanvas(await this._render())
+  async toCanvas(options?: RenderOptions): Promise<HTMLCanvasElement> {
+    return pixelsToCanvas(await this._render(options?.signal))
   }
 
   /** @internal Output size derived from the op graph without rendering. */

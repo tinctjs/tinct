@@ -171,8 +171,19 @@ export interface AdjustOptions {
 /** Encodable output formats. */
 export type ExportFormat = 'png' | 'jpeg' | 'webp'
 
+/** Options accepted by every output method. */
+export interface RenderOptions {
+  /**
+   * Abort an in-flight render. Rendering stops at the next operation
+   * boundary and the output promise rejects with the signal's reason (an
+   * `AbortError` by default). Essential for slider UIs: abort the previous
+   * render when a new one starts instead of letting stale work finish.
+   */
+  signal?: AbortSignal
+}
+
 /** Options accepted by {@link TinctImage.toBlob} and {@link TinctImage.toDataURL}. */
-export interface ExportOptions {
+export interface ExportOptions extends RenderOptions {
   /**
    * Output format.
    * @defaultValue `'png'`

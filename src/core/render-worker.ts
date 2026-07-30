@@ -46,13 +46,20 @@ const BUILTINS = {
 }
 if (Object.keys(BUILTINS).length === 0) throw new Error('unreachable')
 
-/** @internal Message from the client. */
+/** @internal Messages from the client. */
 export interface RenderRequest {
   id: number
+  type: 'render'
   width: number
   height: number
   buffer: ArrayBuffer
   ops: readonly SerializedOp[]
+}
+
+/** @internal Cancels an in-flight render by id. */
+export interface CancelRequest {
+  id: number
+  type: 'cancel'
 }
 
 /** @internal Messages back to the client. */
@@ -62,18 +69,30 @@ export type RenderResponse =
   | { id: number; type: 'error'; message: string }
 
 interface WorkerScope {
-  onmessage: ((event: MessageEvent<RenderRequest>) => void) | null
+  onmessage: ((event: MessageEvent<RenderRequest | CancelRequest>) => void) | null
   postMessage(message: RenderResponse, transfer?: Transferable[]): void
 }
 
 const scope = globalThis as unknown as WorkerScope
+const inFlight = new Map<number, AbortController>()
 
 scope.onmessage = (event) => {
+  if (event.data.type === 'cancel') {
+    inFlight.get(event.data.id)?.abort()
+    return
+  }
   const { id, width, height, buffer, ops } = event.data
+  const controller = new AbortController()
+  inFlight.set(id, controller)
   const source = { width, height, data: new Uint8ClampedArray(buffer) }
-  execute(source, ops, (pct, op) => {
-    scope.postMessage({ id, type: 'progress', pct, op })
-  })
+  execute(
+    source,
+    ops,
+    (pct, op) => {
+      scope.postMessage({ id, type: 'progress', pct, op })
+    },
+    controller.signal,
+  )
     .then((result) => {
       const out = {
         id,
@@ -90,5 +109,8 @@ scope.onmessage = (event) => {
         type: 'error',
         message: error instanceof Error ? error.message : String(error),
       })
+    })
+    .finally(() => {
+      inFlight.delete(id)
     })
 }
