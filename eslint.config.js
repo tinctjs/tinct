@@ -30,7 +30,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['src/cpu/**', 'src/filters/**', 'src/core/executor.ts', 'tests/**'],
+    files: ['src/cpu/**', 'src/filters/**', 'src/gl/**', 'src/core/executor.ts', 'tests/**'],
     rules: {
       // Kernels index typed arrays heavily; with noUncheckedIndexedAccess on,
       // bounds are guaranteed by loop structure and asserted with `!`.
