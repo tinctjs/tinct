@@ -1,5 +1,4 @@
 import { defineFilter, type FilterFactory } from '../core/filter'
-import { cpuTodo } from './internal'
 
 /** Options for {@link posterize}. */
 export type PosterizeOptions = {
@@ -22,5 +21,19 @@ export const posterize: FilterFactory<PosterizeOptions> =
   /* @__PURE__ */ defineFilter<PosterizeOptions>({
     name: 'posterize',
     defaults: { levels: 4 },
-    fallback: cpuTodo('posterize'),
+    fallback: (pixels, { levels = 4 }) => {
+      const n = Math.max(2, Math.min(255, Math.floor(levels)))
+      const step = 255 / (n - 1)
+      const lut = new Uint8ClampedArray(256)
+      for (let v = 0; v < 256; v++) {
+        lut[v] = Math.round(Math.round(v / step) * step)
+      }
+      const { data } = pixels
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = lut[data[i]!]!
+        data[i + 1] = lut[data[i + 1]!]!
+        data[i + 2] = lut[data[i + 2]!]!
+      }
+      return undefined
+    },
   })
