@@ -18,7 +18,7 @@ import type {
   Unsubscribe,
 } from './types'
 import { FILTER_DEFINITION, type Filter, type FilterDefinition, type FilterOptions } from './filter'
-import { resolveCrop, resolveResize, rotateBounds } from './geometry-math'
+import { inscribedBounds, resolveCrop, resolveResize, rotateBounds } from './geometry-math'
 import { execute, type OpNode } from './executor'
 import { RenderCache } from './render-cache'
 import { renderInWorker, shouldUseWorker } from './worker-client'
@@ -289,7 +289,11 @@ function opSize(node: OpNode, w: number, h: number): [number, number] {
       return [out.width, out.height]
     }
     case 'rotate': {
-      const bounds = rotateBounds(node.params.angle, w, h)
+      const angle = ((node.params.angle % 360) + 360) % 360
+      const bounds =
+        node.params.trim && angle % 90 !== 0
+          ? inscribedBounds(angle, w, h)
+          : rotateBounds(angle, w, h)
       return [bounds.width, bounds.height]
     }
     default:

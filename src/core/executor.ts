@@ -17,7 +17,7 @@ import { filterRegistry } from './filter'
 import type { PixelData } from './pixel'
 import { clonePixelData } from './pixel'
 import type { SerializedOp } from './types'
-import { resolveCrop, resolveResize, rotateBounds } from './geometry-math'
+import { inscribedBounds, resolveCrop, resolveResize, rotateBounds } from './geometry-math'
 import { cropPixels, flipPixels, rotate90, rotateArbitrary } from '../cpu/geometry'
 import { resample } from '../cpu/resample'
 import { adjustPixels } from '../cpu/adjust'
@@ -170,7 +170,16 @@ function runCpuOp(pixels: PixelData, node: OpNode): PixelData {
       if (angle % 90 === 0) return rotate90(pixels, (angle / 90) as 1 | 2 | 3)
       const bounds = rotateBounds(angle, pixels.width, pixels.height)
       const background = parseColor(node.params.background ?? 'transparent')
-      return rotateArbitrary(pixels, angle, bounds.width, bounds.height, background)
+      const rotated = rotateArbitrary(pixels, angle, bounds.width, bounds.height, background)
+      if (!node.params.trim) return rotated
+      // Straighten: center-crop to the largest fully-covered rectangle.
+      const inner = inscribedBounds(angle, pixels.width, pixels.height)
+      return cropPixels(rotated, {
+        x: Math.floor((rotated.width - inner.width) / 2),
+        y: Math.floor((rotated.height - inner.height) / 2),
+        width: inner.width,
+        height: inner.height,
+      })
     }
     case 'flip':
       return flipPixels(pixels, node.params.axis)

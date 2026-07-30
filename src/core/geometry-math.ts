@@ -186,3 +186,40 @@ export function rotateBounds(
     height: Math.round(width * sin + height * cos),
   }
 }
+
+/**
+ * @internal
+ * Largest axis-aligned rectangle fully inside a `width`×`height` rectangle
+ * rotated by `angle` degrees (the classic max-area inscribed-rect formula),
+ * shrunk by a 1px inset so bilinear edge bleed never reaches the crop.
+ * Shared by the editor's dimension math and the executor.
+ */
+export function inscribedBounds(
+  angle: number,
+  width: number,
+  height: number,
+): { width: number; height: number } {
+  const rad = (angle * Math.PI) / 180
+  const sin = Math.abs(Math.sin(rad))
+  const cos = Math.abs(Math.cos(rad))
+
+  let wr: number
+  let hr: number
+  const longSide = Math.max(width, height)
+  const shortSide = Math.min(width, height)
+  if (shortSide <= 2 * sin * cos * longSide || Math.abs(sin - cos) < 1e-10) {
+    // Fully constrained: two opposite corners of the inscribed rectangle
+    // touch the long sides of the rotated image.
+    const x = 0.5 * shortSide
+    wr = width >= height ? x / sin : x / cos
+    hr = width >= height ? x / cos : x / sin
+  } else {
+    const cos2a = cos * cos - sin * sin
+    wr = (width * cos - height * sin) / cos2a
+    hr = (height * cos - width * sin) / cos2a
+  }
+  return {
+    width: Math.max(1, Math.floor(wr) - 2),
+    height: Math.max(1, Math.floor(hr) - 2),
+  }
+}

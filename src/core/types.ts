@@ -135,6 +135,15 @@ export interface RotateOptions {
    * @defaultValue `'transparent'`
    */
   background?: string
+  /**
+   * Straighten mode: instead of expanding to the rotated bounding box, crop
+   * to the largest axis-aligned rectangle fully inside the rotated image —
+   * no background corners in the result. The output aspect ratio may differ
+   * slightly from the source (a 1px safety inset also guards against edge
+   * resampling bleed). No effect on 90°-multiple rotations.
+   * @defaultValue `false`
+   */
+  trim?: boolean
 }
 
 /** Axis for {@link TinctImage.flip}. */
