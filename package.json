@@ -1,0 +1,76 @@
+{
+  "name": "tinctjs",
+  "version": "0.0.0",
+  "description": "Zero-dependency, TypeScript-first, in-browser image editing. Small, composable, tree-shakeable.",
+  "type": "module",
+  "sideEffects": false,
+  "license": "MIT",
+  "author": "Azeem Hassni <azeemhassni@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/azeemhassni/tinct.git"
+  },
+  "homepage": "https://github.com/azeemhassni/tinct#readme",
+  "bugs": {
+    "url": "https://github.com/azeemhassni/tinct/issues"
+  },
+  "keywords": [
+    "image",
+    "image-editing",
+    "image-processing",
+    "canvas",
+    "webgl",
+    "filters",
+    "crop",
+    "resize",
+    "browser",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./filters": {
+      "types": "./dist/filters/index.d.ts",
+      "import": "./dist/filters/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "size": "size-limit",
+    "publint": "publint",
+    "changeset": "changeset",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build && npm run publint && npm run size"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.31.1",
+    "@eslint/js": "^10.0.1",
+    "@size-limit/preset-small-lib": "^13.0.2",
+    "eslint": "^10.8.0",
+    "prettier": "^3.9.6",
+    "publint": "^0.3.22",
+    "size-limit": "^13.0.2",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^4.1.10"
+  }
+}
