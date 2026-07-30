@@ -33,5 +33,11 @@
     "path": "dist/hash/index.js",
     "import": "{ thumbHash }",
     "limit": "2 kB"
+  },
+  {
+    "name": "palette",
+    "path": "dist/palette/index.js",
+    "import": "{ palette }",
+    "limit": "2 kB"
   }
 ]
