@@ -5,7 +5,7 @@ import tseslint from 'typescript-eslint'
 export default tseslint.config(
   // The playground is a demo app with its own tsconfig; the library check
   // suite lints src/ and tests/ only.
-  { ignores: ['dist/', 'coverage/', 'playground/'] },
+  { ignores: ['dist/', 'coverage/', 'playground/', 'scripts/'] },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
