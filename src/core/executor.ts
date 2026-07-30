@@ -53,7 +53,12 @@ export async function execute(
     if (queued.length === 0) return
     const batch = queued
     queued = []
-    const gpuResult = backend ? backend.run(current, batch.map((q) => q.pass)) : null
+    const gpuResult = backend
+      ? backend.run(
+          current,
+          batch.map((q) => q.pass),
+        )
+      : null
     if (gpuResult) {
       current = gpuResult
       return
