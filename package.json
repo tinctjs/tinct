@@ -1,6 +1,6 @@
 {
   "name": "tinctjs",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Zero-dependency, TypeScript-first, in-browser image editing. Small, composable, tree-shakeable.",
   "type": "module",
   "sideEffects": false,
@@ -75,7 +75,8 @@
     "publint": "publint",
     "changeset": "changeset",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build && npm run publint && npm run size",
-    "test:browser": "vitest run -c vitest.browser.config.ts"
+    "test:browser": "vitest run -c vitest.browser.config.ts",
+    "prepublishOnly": "npm run check"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",
