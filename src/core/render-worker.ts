@@ -25,6 +25,7 @@ import {
   noise,
   posterize,
   curves,
+  median,
 } from '../filters/index'
 import { enableFaceGravity } from '../face/index'
 
@@ -45,6 +46,7 @@ const BUILTINS = {
   noise,
   posterize,
   curves,
+  median,
 }
 if (Object.keys(BUILTINS).length === 0) throw new Error('unreachable')
 

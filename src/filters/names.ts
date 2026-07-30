@@ -21,4 +21,5 @@ export const BUILTIN_FILTER_NAMES: readonly string[] = [
   'noise',
   'posterize',
   'curves',
+  'median',
 ]
