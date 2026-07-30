@@ -25,6 +25,10 @@ import {
   noise,
   posterize,
 } from '../filters/index'
+import { enableFaceGravity } from '../face/index'
+
+// The worker supports every built-in capability, so 'face' crops offload too.
+enableFaceGravity()
 
 // Referencing the factories keeps their modules (and registry entries) in
 // this chunk even under aggressive tree-shaking.

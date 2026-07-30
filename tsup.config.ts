@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: 'src/index.ts',
     'filters/index': 'src/filters/index.ts',
+    'face/index': 'src/face/index.ts',
     // Emitted next to index.js so `new URL('./render-worker.js', import.meta.url)`
     // resolves both when served raw and through bundlers' worker handling.
     'render-worker': 'src/core/render-worker.ts',

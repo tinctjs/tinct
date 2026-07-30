@@ -45,6 +45,10 @@
       "types": "./dist/filters/index.d.ts",
       "import": "./dist/filters/index.js"
     },
+    "./face": {
+      "types": "./dist/face/index.d.ts",
+      "import": "./dist/face/index.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",

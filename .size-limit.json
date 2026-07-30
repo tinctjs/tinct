@@ -21,5 +21,11 @@
     "name": "all filters",
     "path": "dist/filters/index.js",
     "limit": "10 kB"
+  },
+  {
+    "name": "face gravity",
+    "path": "dist/face/index.js",
+    "import": "{ enableFaceGravity }",
+    "limit": "2 kB"
   }
 ]
