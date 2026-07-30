@@ -52,8 +52,11 @@ export interface FilterDefinition<TOptions extends FilterOptions = FilterOptions
   fallback: (pixels: PixelData, options: Readonly<TOptions>) => PixelData | undefined
   /**
    * Optional WebGL2 fragment shader (GLSL ES 3.00). Receives the source
-   * image as `uniform sampler2D u_image` and texture coordinates as
-   * `in vec2 v_texCoord`; must write to `out vec4 outColor`.
+   * image as `uniform sampler2D u_image`, the output size in pixels as
+   * `uniform vec2 u_resolution` (always provided), and texture coordinates
+   * as `in vec2 v_texCoord` (origin top-left); must write to
+   * `out vec4 outColor`. Output must match `fallback` within a small
+   * tolerance — the CPU kernel is the reference implementation.
    */
   fragment?: string
   /** Maps filter options to values for the shader's custom uniforms. */
