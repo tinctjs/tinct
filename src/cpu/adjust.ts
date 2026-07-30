@@ -79,8 +79,13 @@ export const LUMA_R = 0.2126
 export const LUMA_G = 0.7152
 export const LUMA_B = 0.0722
 
-/** Combined saturation × hue-rotation 3×3 matrix (row-major), or null if no-op. */
-function buildColorMatrix(saturation: number, hue: number): number[] | null {
+/**
+ * @internal
+ * Combined saturation × hue-rotation 3×3 matrix (row-major), or null if
+ * no-op. Shared with the WebGL2 adjust shader so both paths use identical
+ * coefficients.
+ */
+export function buildColorMatrix(saturation: number, hue: number): number[] | null {
   if (saturation === 0 && hue === 0) return null
 
   // Saturation: lerp between luma projection (f=0) and identity (f=1).
