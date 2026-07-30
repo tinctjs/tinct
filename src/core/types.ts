@@ -201,6 +201,14 @@ export interface ExportOptions extends RenderOptions {
    * @defaultValue `'#ffffff'`
    */
   background?: string
+  /**
+   * Target encoded size in bytes for lossy formats (`jpeg`, `webp`): the
+   * encoder searches for the highest quality that stays at or under the
+   * budget (`quality` acts as the upper bound). Rejects if the budget is
+   * unreachable even at minimum quality — resize the image down first.
+   * Rejects for `png`, which has no quality axis.
+   */
+  maxBytes?: number
 }
 
 /** Sources accepted by {@link tinct.load}. */

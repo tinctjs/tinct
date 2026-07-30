@@ -27,17 +27,75 @@ export function pixelsToCanvas(pixels: PixelData): HTMLCanvasElement {
 /** @internal PixelData → encoded Blob. */
 export async function pixelsToBlob(pixels: PixelData, options?: ExportOptions): Promise<Blob> {
   const canvas = prepareCanvas(pixels, options)
+  if (options?.maxBytes !== undefined) {
+    return encodeToTarget(canvas, options as ExportOptions & { maxBytes: number })
+  }
   return canvasToBlob(canvas, mimeType(options), options?.quality)
 }
 
 /** @internal PixelData → data URL string. */
 export async function pixelsToDataURL(pixels: PixelData, options?: ExportOptions): Promise<string> {
+  if (options?.maxBytes !== undefined) {
+    // maxBytes budgets the encoded bytes (the base64 URL is ~4/3 longer).
+    return blobToDataURL(await pixelsToBlob(pixels, options))
+  }
   const canvas = prepareCanvas(pixels, options)
   if (typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement) {
     return canvas.toDataURL(mimeType(options), options?.quality)
   }
   const blob = await canvasToBlob(canvas, mimeType(options), options?.quality)
   return blobToDataURL(blob)
+}
+
+/** The lowest quality the target-size search will accept. */
+const MIN_QUALITY = 0.05
+/** Bisection steps: 6 narrows quality to ~1.5% granularity. */
+const SEARCH_STEPS = 6
+
+/**
+ * Find the highest quality whose encoded size fits `maxBytes` by bisecting
+ * the quality axis (encoded size grows monotonically with quality). The
+ * render happens once — only the encode repeats, at most 2 + SEARCH_STEPS
+ * times.
+ */
+async function encodeToTarget(
+  canvas: AnyCanvas,
+  options: ExportOptions & { maxBytes: number },
+): Promise<Blob> {
+  const { maxBytes } = options
+  const format = options.format ?? 'png'
+  if (format === 'png') {
+    throw new Error(
+      'tinct: maxBytes needs a quality axis — png has none; use jpeg or webp, or resize the image down',
+    )
+  }
+  const type = mimeType(options)
+
+  let hi = options.quality ?? 0.92
+  const atHi = await canvasToBlob(canvas, type, hi)
+  if (atHi.size <= maxBytes) return atHi
+
+  let lo = MIN_QUALITY
+  let best = await canvasToBlob(canvas, type, lo)
+  if (best.size > maxBytes) {
+    throw new Error(
+      `tinct: cannot encode under ${String(maxBytes)} bytes — the smallest ${format} at quality ${String(
+        MIN_QUALITY,
+      )} is ${String(best.size)} bytes; resize the image down first`,
+    )
+  }
+
+  for (let i = 0; i < SEARCH_STEPS; i++) {
+    const mid = (lo + hi) / 2
+    const candidate = await canvasToBlob(canvas, type, mid)
+    if (candidate.size <= maxBytes) {
+      best = candidate
+      lo = mid
+    } else {
+      hi = mid
+    }
+  }
+  return best
 }
 
 function mimeType(options?: ExportOptions): string {
