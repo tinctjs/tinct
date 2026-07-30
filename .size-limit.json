@@ -1,0 +1,25 @@
+[
+  {
+    "name": "core: tinct + defineFilter",
+    "path": "dist/index.js",
+    "import": "{ tinct, defineFilter }",
+    "limit": "8 kB"
+  },
+  {
+    "name": "single filter: grayscale",
+    "path": "dist/filters/index.js",
+    "import": "{ grayscale }",
+    "limit": "2 kB"
+  },
+  {
+    "name": "single filter: blur",
+    "path": "dist/filters/index.js",
+    "import": "{ blur }",
+    "limit": "2 kB"
+  },
+  {
+    "name": "all filters",
+    "path": "dist/filters/index.js",
+    "limit": "10 kB"
+  }
+]
