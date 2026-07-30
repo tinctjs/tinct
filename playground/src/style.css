@@ -136,8 +136,7 @@ button:hover {
   flex: 1;
   display: grid;
   place-items: center;
-  background:
-    repeating-conic-gradient(#1b1e24 0% 25%, #22262d 0% 50%) 0 0 / 24px 24px;
+  background: repeating-conic-gradient(#1b1e24 0% 25%, #22262d 0% 50%) 0 0 / 24px 24px;
   border-radius: 8px;
   min-height: 0;
 }

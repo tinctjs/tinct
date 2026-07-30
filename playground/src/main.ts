@@ -48,9 +48,11 @@ let detachProgress: (() => void) | null = null
 
 function buildPipeline(image: TinctImage): TinctImage {
   let p = image
-  if (state.crop.enabled) p = p.crop({ aspect: state.crop.aspect as `${number}:${number}`, gravity: state.crop.gravity })
+  if (state.crop.enabled)
+    p = p.crop({ aspect: state.crop.aspect as `${number}:${number}`, gravity: state.crop.gravity })
   if (state.resize.enabled) p = p.resize({ width: state.resize.width, kernel: state.resize.kernel })
-  if (state.rotate.angle !== 0) p = p.rotate(state.rotate.angle, { background: state.rotate.background })
+  if (state.rotate.angle !== 0)
+    p = p.rotate(state.rotate.angle, { background: state.rotate.background })
   if (state.flipH) p = p.flip('horizontal')
   if (state.flipV) p = p.flip('vertical')
   const a = state.adjust
@@ -64,8 +66,10 @@ function buildPipeline(image: TinctImage): TinctImage {
   if (f.blur.enabled) p = p.apply(blur({ radius: f.blur.radius }))
   if (f.sharpen.enabled) p = p.apply(sharpen({ amount: f.sharpen.amount }))
   if (f.pixelate.enabled) p = p.apply(pixelate({ size: f.pixelate.size }))
-  if (f.vignette.enabled) p = p.apply(vignette({ amount: f.vignette.amount, radius: f.vignette.radius }))
-  if (f.duotone.enabled) p = p.apply(duotone({ shadows: f.duotone.shadows, highlights: f.duotone.highlights }))
+  if (f.vignette.enabled)
+    p = p.apply(vignette({ amount: f.vignette.amount, radius: f.vignette.radius }))
+  if (f.duotone.enabled)
+    p = p.apply(duotone({ shadows: f.duotone.shadows, highlights: f.duotone.highlights }))
   if (f.noise.enabled) p = p.apply(noise({ amount: f.noise.amount, seed: f.noise.seed }))
   if (f.posterize.enabled) p = p.apply(posterize({ levels: f.posterize.levels }))
   return p
@@ -213,11 +217,30 @@ function buildPanels(): void {
     {
       title: 'Crop',
       controls: [
-        checkbox('Enable crop', () => state.crop.enabled, (v) => (state.crop.enabled = v)),
-        select('Aspect', ['16:9', '4:3', '1:1', '3:2', '9:16'], () => state.crop.aspect, (v) => (state.crop.aspect = v)),
+        checkbox(
+          'Enable crop',
+          () => state.crop.enabled,
+          (v) => (state.crop.enabled = v),
+        ),
+        select(
+          'Aspect',
+          ['16:9', '4:3', '1:1', '3:2', '9:16'],
+          () => state.crop.aspect,
+          (v) => (state.crop.aspect = v),
+        ),
         select(
           'Gravity',
-          ['center', 'north', 'south', 'east', 'west', 'north-east', 'north-west', 'south-east', 'south-west'],
+          [
+            'center',
+            'north',
+            'south',
+            'east',
+            'west',
+            'north-east',
+            'north-west',
+            'south-east',
+            'south-west',
+          ],
           () => state.crop.gravity,
           (v) => (state.crop.gravity = v as Gravity),
         ),
@@ -226,56 +249,251 @@ function buildPanels(): void {
     {
       title: 'Resize',
       controls: [
-        checkbox('Enable resize', () => state.resize.enabled, (v) => (state.resize.enabled = v)),
-        slider('Width', 64, 2048, 16, () => state.resize.width, (v) => (state.resize.width = v)),
-        select('Kernel', ['auto', 'lanczos', 'triangle', 'nearest'], () => state.resize.kernel, (v) => (state.resize.kernel = v as ResizeKernel)),
+        checkbox(
+          'Enable resize',
+          () => state.resize.enabled,
+          (v) => (state.resize.enabled = v),
+        ),
+        slider(
+          'Width',
+          64,
+          2048,
+          16,
+          () => state.resize.width,
+          (v) => (state.resize.width = v),
+        ),
+        select(
+          'Kernel',
+          ['auto', 'lanczos', 'triangle', 'nearest'],
+          () => state.resize.kernel,
+          (v) => (state.resize.kernel = v as ResizeKernel),
+        ),
       ],
     },
     {
       title: 'Rotate & flip',
       controls: [
-        slider('Angle', -180, 180, 1, () => state.rotate.angle, (v) => (state.rotate.angle = v)),
-        color('Background', () => state.rotate.background, (v) => (state.rotate.background = v)),
-        checkbox('Flip horizontal', () => state.flipH, (v) => (state.flipH = v)),
-        checkbox('Flip vertical', () => state.flipV, (v) => (state.flipV = v)),
+        slider(
+          'Angle',
+          -180,
+          180,
+          1,
+          () => state.rotate.angle,
+          (v) => (state.rotate.angle = v),
+        ),
+        color(
+          'Background',
+          () => state.rotate.background,
+          (v) => (state.rotate.background = v),
+        ),
+        checkbox(
+          'Flip horizontal',
+          () => state.flipH,
+          (v) => (state.flipH = v),
+        ),
+        checkbox(
+          'Flip vertical',
+          () => state.flipV,
+          (v) => (state.flipV = v),
+        ),
       ],
     },
     {
       title: 'Adjust',
       controls: [
-        slider('Brightness', -1, 1, 0.01, () => state.adjust.brightness, (v) => (state.adjust.brightness = v)),
-        slider('Contrast', -1, 1, 0.01, () => state.adjust.contrast, (v) => (state.adjust.contrast = v)),
-        slider('Saturation', -1, 1, 0.01, () => state.adjust.saturation, (v) => (state.adjust.saturation = v)),
-        slider('Exposure', -1, 1, 0.01, () => state.adjust.exposure, (v) => (state.adjust.exposure = v)),
-        slider('Hue', -180, 180, 1, () => state.adjust.hue, (v) => (state.adjust.hue = v)),
-        slider('Gamma', 0.1, 4, 0.05, () => state.adjust.gamma, (v) => (state.adjust.gamma = v)),
+        slider(
+          'Brightness',
+          -1,
+          1,
+          0.01,
+          () => state.adjust.brightness,
+          (v) => (state.adjust.brightness = v),
+        ),
+        slider(
+          'Contrast',
+          -1,
+          1,
+          0.01,
+          () => state.adjust.contrast,
+          (v) => (state.adjust.contrast = v),
+        ),
+        slider(
+          'Saturation',
+          -1,
+          1,
+          0.01,
+          () => state.adjust.saturation,
+          (v) => (state.adjust.saturation = v),
+        ),
+        slider(
+          'Exposure',
+          -1,
+          1,
+          0.01,
+          () => state.adjust.exposure,
+          (v) => (state.adjust.exposure = v),
+        ),
+        slider(
+          'Hue',
+          -180,
+          180,
+          1,
+          () => state.adjust.hue,
+          (v) => (state.adjust.hue = v),
+        ),
+        slider(
+          'Gamma',
+          0.1,
+          4,
+          0.05,
+          () => state.adjust.gamma,
+          (v) => (state.adjust.gamma = v),
+        ),
       ],
     },
     {
       title: 'Filters',
       controls: [
-        checkbox('Grayscale', () => state.filters.grayscale.enabled, (v) => (state.filters.grayscale.enabled = v)),
-        slider('· amount', 0, 1, 0.05, () => state.filters.grayscale.amount, (v) => (state.filters.grayscale.amount = v)),
-        checkbox('Sepia', () => state.filters.sepia.enabled, (v) => (state.filters.sepia.enabled = v)),
-        slider('· amount', 0, 1, 0.05, () => state.filters.sepia.amount, (v) => (state.filters.sepia.amount = v)),
-        checkbox('Invert', () => state.filters.invert.enabled, (v) => (state.filters.invert.enabled = v)),
-        checkbox('Blur', () => state.filters.blur.enabled, (v) => (state.filters.blur.enabled = v)),
-        slider('· radius', 0, 20, 0.5, () => state.filters.blur.radius, (v) => (state.filters.blur.radius = v)),
-        checkbox('Sharpen', () => state.filters.sharpen.enabled, (v) => (state.filters.sharpen.enabled = v)),
-        slider('· amount', 0, 1, 0.05, () => state.filters.sharpen.amount, (v) => (state.filters.sharpen.amount = v)),
-        checkbox('Pixelate', () => state.filters.pixelate.enabled, (v) => (state.filters.pixelate.enabled = v)),
-        slider('· size', 2, 48, 1, () => state.filters.pixelate.size, (v) => (state.filters.pixelate.size = v)),
-        checkbox('Vignette', () => state.filters.vignette.enabled, (v) => (state.filters.vignette.enabled = v)),
-        slider('· amount', 0, 1, 0.05, () => state.filters.vignette.amount, (v) => (state.filters.vignette.amount = v)),
-        slider('· radius', 0, 1, 0.05, () => state.filters.vignette.radius, (v) => (state.filters.vignette.radius = v)),
-        checkbox('Duotone', () => state.filters.duotone.enabled, (v) => (state.filters.duotone.enabled = v)),
-        color('· shadows', () => state.filters.duotone.shadows, (v) => (state.filters.duotone.shadows = v)),
-        color('· highlights', () => state.filters.duotone.highlights, (v) => (state.filters.duotone.highlights = v)),
-        checkbox('Noise', () => state.filters.noise.enabled, (v) => (state.filters.noise.enabled = v)),
-        slider('· amount', 0, 1, 0.02, () => state.filters.noise.amount, (v) => (state.filters.noise.amount = v)),
-        slider('· seed', 0, 100, 1, () => state.filters.noise.seed, (v) => (state.filters.noise.seed = v)),
-        checkbox('Posterize', () => state.filters.posterize.enabled, (v) => (state.filters.posterize.enabled = v)),
-        slider('· levels', 2, 16, 1, () => state.filters.posterize.levels, (v) => (state.filters.posterize.levels = v)),
+        checkbox(
+          'Grayscale',
+          () => state.filters.grayscale.enabled,
+          (v) => (state.filters.grayscale.enabled = v),
+        ),
+        slider(
+          '· amount',
+          0,
+          1,
+          0.05,
+          () => state.filters.grayscale.amount,
+          (v) => (state.filters.grayscale.amount = v),
+        ),
+        checkbox(
+          'Sepia',
+          () => state.filters.sepia.enabled,
+          (v) => (state.filters.sepia.enabled = v),
+        ),
+        slider(
+          '· amount',
+          0,
+          1,
+          0.05,
+          () => state.filters.sepia.amount,
+          (v) => (state.filters.sepia.amount = v),
+        ),
+        checkbox(
+          'Invert',
+          () => state.filters.invert.enabled,
+          (v) => (state.filters.invert.enabled = v),
+        ),
+        checkbox(
+          'Blur',
+          () => state.filters.blur.enabled,
+          (v) => (state.filters.blur.enabled = v),
+        ),
+        slider(
+          '· radius',
+          0,
+          20,
+          0.5,
+          () => state.filters.blur.radius,
+          (v) => (state.filters.blur.radius = v),
+        ),
+        checkbox(
+          'Sharpen',
+          () => state.filters.sharpen.enabled,
+          (v) => (state.filters.sharpen.enabled = v),
+        ),
+        slider(
+          '· amount',
+          0,
+          1,
+          0.05,
+          () => state.filters.sharpen.amount,
+          (v) => (state.filters.sharpen.amount = v),
+        ),
+        checkbox(
+          'Pixelate',
+          () => state.filters.pixelate.enabled,
+          (v) => (state.filters.pixelate.enabled = v),
+        ),
+        slider(
+          '· size',
+          2,
+          48,
+          1,
+          () => state.filters.pixelate.size,
+          (v) => (state.filters.pixelate.size = v),
+        ),
+        checkbox(
+          'Vignette',
+          () => state.filters.vignette.enabled,
+          (v) => (state.filters.vignette.enabled = v),
+        ),
+        slider(
+          '· amount',
+          0,
+          1,
+          0.05,
+          () => state.filters.vignette.amount,
+          (v) => (state.filters.vignette.amount = v),
+        ),
+        slider(
+          '· radius',
+          0,
+          1,
+          0.05,
+          () => state.filters.vignette.radius,
+          (v) => (state.filters.vignette.radius = v),
+        ),
+        checkbox(
+          'Duotone',
+          () => state.filters.duotone.enabled,
+          (v) => (state.filters.duotone.enabled = v),
+        ),
+        color(
+          '· shadows',
+          () => state.filters.duotone.shadows,
+          (v) => (state.filters.duotone.shadows = v),
+        ),
+        color(
+          '· highlights',
+          () => state.filters.duotone.highlights,
+          (v) => (state.filters.duotone.highlights = v),
+        ),
+        checkbox(
+          'Noise',
+          () => state.filters.noise.enabled,
+          (v) => (state.filters.noise.enabled = v),
+        ),
+        slider(
+          '· amount',
+          0,
+          1,
+          0.02,
+          () => state.filters.noise.amount,
+          (v) => (state.filters.noise.amount = v),
+        ),
+        slider(
+          '· seed',
+          0,
+          100,
+          1,
+          () => state.filters.noise.seed,
+          (v) => (state.filters.noise.seed = v),
+        ),
+        checkbox(
+          'Posterize',
+          () => state.filters.posterize.enabled,
+          (v) => (state.filters.posterize.enabled = v),
+        ),
+        slider(
+          '· levels',
+          2,
+          16,
+          1,
+          () => state.filters.posterize.levels,
+          (v) => (state.filters.posterize.levels = v),
+        ),
       ],
     },
   ]
