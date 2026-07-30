@@ -106,7 +106,49 @@ Built-in filters (`tinctjs/filters`): `grayscale`, `sepia`, `invert`, `blur`,
 
 Companion modules, each ~1.5 kB and tree-shaken when unused: `tinctjs/face`
 (content-aware cropping), `tinctjs/hash` (ThumbHash placeholders),
-`tinctjs/palette` (dominant colors).
+`tinctjs/palette` (dominant colors), `tinctjs/layers` (multi-image
+documents).
+
+### Layers
+
+`tinctjs/layers` turns Tinct from a one-image pipeline into a document model
+— collage makers, meme tools, thumbnail builders, template renderers. Every
+layer's content is a full pipeline, so filters, adjustments, and geometry
+work per layer for free:
+
+```ts
+import { document, layer } from 'tinctjs/layers'
+
+const doc = document({ width: 1080, height: 1350, background: '#ffffff' })
+  .add(layer(photo))
+  .add(
+    layer(sticker.resize({ width: 300 }))
+      .at(650, 80)
+      .opacity(0.9)
+      .blend('multiply')
+      .name('sticker'),
+  )
+
+const dragged = doc.move('sticker', { dx: 20, dy: -10 }) // new document
+const blob = await dragged.flatten().toBlob({ format: 'webp' })
+```
+
+| API                                                     | Description                                                                                                           |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `document({ width, height, background })`               | Fixed canvas, ordered layer stack                                                                                     |
+| `layer(image)`                                          | Wrap a pipeline; `.at()`, `.opacity()`, `.blend()`, `.visible()`, `.name()` read with no argument and derive with one |
+| `.add` `.insert` `.remove` `.update` `.move` `.reorder` | All return a new document, addressing layers by name or index                                                         |
+| `.boundsOf(ref)`                                        | The layer's rectangle — arithmetic only, safe in a drag loop                                                          |
+| `.layerAt(x, y)`                                        | Top-most alpha-aware hit test: clicking a transparent hole selects what's behind it                                   |
+| `.flatten()`                                            | Composite to a `TinctImage` — chain, export, or reuse it as a layer                                                   |
+| `.toJSON()` / `fromJSON(data)`                          | Versioned envelope with a shared sources table                                                                        |
+
+Blend modes: `source-over`, `multiply`, `screen`, `darken`, `lighten`.
+
+Documents are immutable and share structure, so undo/redo is keeping
+references — and layer pixels are cached per pipeline, so dragging,
+reordering, or changing a layer's opacity re-runs only the composite pass,
+never the layers below. UIs own the mouse; Tinct owns the model and the math.
 
 ### Face-aware cropping
 
@@ -183,6 +225,11 @@ Enforced budgets in CI via [size-limit](https://github.com/ai/size-limit):
 | Each individual filter              | ≤ 2 kB gzip  | 0.44–0.52 kB      |
 | All filters together                | ≤ 10 kB      | ~3 kB             |
 | `tinctjs/face`, `/hash`, `/palette` | ≤ 2 kB each  | 1.2–1.6 kB        |
+| `tinctjs/layers` (own code)         | ≤ 4 kB       | ~1.6 kB           |
+
+`tinctjs/layers` is measured as a delta: the size-limit config carries the
+core baseline it builds on and the layers entry at baseline + 4 kB, so the
+budget tracks the layers code rather than the engine underneath it.
 
 Core includes the full CPU engine, the WebGL2 renderer, the worker client,
 the incremental render cache, cancellation, and the overlay compositor. The
@@ -211,7 +258,8 @@ Use a scene-graph library for interactive canvas apps, and sharp for servers.
 ## Roadmap
 
 - **v0.1** — everything above: geometry, adjustments, filters, serialization, CPU + WebGL2, workers.
-- **Later (not v0.1):** layers & compositing, text, drawing/brushes, AI-assisted features, more codecs (AVIF), plugin ecosystem.
+- **v0.3** — `tinctjs/layers`: multi-image documents, CPU compositing, blend modes, hit testing, versioned document serialization.
+- **Later:** GPU compositing and affine layer placement, text, drawing/brushes, AI-assisted features, more codecs (AVIF), plugin ecosystem.
 
 ## Contributing
 
