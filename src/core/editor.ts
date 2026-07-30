@@ -12,13 +12,21 @@ import type {
   FlipAxis,
   JsonObject,
   ResizeOptions,
+  OverlayOptions,
   RotateOptions,
   SerializedOp,
   TinctEventMap,
   Unsubscribe,
 } from './types'
 import { FILTER_DEFINITION, type Filter, type FilterDefinition, type FilterOptions } from './filter'
-import { inscribedBounds, resolveCrop, resolveResize, rotateBounds } from './geometry-math'
+import {
+  compassFactors,
+  inscribedBounds,
+  resolveCrop,
+  resolveResize,
+  rotateBounds,
+} from './geometry-math'
+import { bytesToBase64 } from './base64'
 import { execute, type OpNode } from './executor'
 import { RenderCache } from './render-cache'
 import { renderInWorker, shouldUseWorker } from './worker-client'
@@ -184,6 +192,51 @@ export class TinctImage {
    */
   adjust(options: AdjustOptions): TinctImage {
     return this.#derive({ op: 'adjust', params: options })
+  }
+
+  /**
+   * Composite another image on top — watermarks, logo stamps, badges.
+   *
+   * `source` is `ImageData` or any {@link PixelData} (render another
+   * pipeline with `toImageData()` to use it as an overlay). Placement uses
+   * compass gravities with an optional margin; `opacity` multiplies the
+   * overlay's own alpha. The overlay is used at its natural size — resize it
+   * beforehand if needed.
+   *
+   * The overlay pixels are copied and serialized *into* the history
+   * (self-contained replay, at the cost of history size — see
+   * {@link SerializedOp}).
+   *
+   * @example
+   * ```ts
+   * const logo = await tinct.load(logoFile)
+   * image.overlay(await logo.resize({ width: 160 }).toImageData(), {
+   *   gravity: 'south-east',
+   *   margin: 16,
+   *   opacity: 0.8,
+   * })
+   * ```
+   */
+  overlay(source: PixelData, options?: OverlayOptions): TinctImage {
+    const gravity = options?.gravity ?? 'south-east'
+    if (!compassFactors(gravity)) {
+      throw new Error(
+        `tinct: overlay gravity must be a compass position — '${gravity}' is only valid for crops`,
+      )
+    }
+    return this.#derive({
+      op: 'overlay',
+      params: {
+        source: {
+          width: source.width,
+          height: source.height,
+          data64: bytesToBase64(source.data),
+        },
+        gravity,
+        ...(options?.margin !== undefined && { margin: options.margin }),
+        ...(options?.opacity !== undefined && { opacity: options.opacity }),
+      },
+    })
   }
 
   /**

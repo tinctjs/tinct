@@ -17,8 +17,16 @@ import { filterRegistry } from './filter'
 import type { PixelData } from './pixel'
 import { clonePixelData } from './pixel'
 import type { SerializedOp } from './types'
-import { inscribedBounds, resolveCrop, resolveResize, rotateBounds } from './geometry-math'
+import {
+  compassFactors,
+  inscribedBounds,
+  resolveCrop,
+  resolveResize,
+  rotateBounds,
+} from './geometry-math'
+import { base64ToBytes } from './base64'
 import { cropPixels, flipPixels, rotate90, rotateArbitrary } from '../cpu/geometry'
+import { compositeOver } from '../cpu/composite'
 import { resample } from '../cpu/resample'
 import { adjustPixels } from '../cpu/adjust'
 import { parseColor } from '../cpu/color'
@@ -183,6 +191,27 @@ function runCpuOp(pixels: PixelData, node: OpNode): PixelData {
     }
     case 'flip':
       return flipPixels(pixels, node.params.axis)
+    case 'overlay': {
+      const { source, gravity = 'south-east', margin = 0, opacity = 1 } = node.params
+      const anchor = compassFactors(gravity)
+      if (!anchor) {
+        throw new Error(`tinct: overlay gravity must be a compass position (got '${gravity}')`)
+      }
+      const over: PixelData = {
+        width: source.width,
+        height: source.height,
+        data: base64ToBytes(source.data64),
+      }
+      // Margin pushes inward from anchored edges; centered axes ignore it.
+      const x =
+        Math.round((pixels.width - over.width) * anchor.x) +
+        (anchor.x === 0 ? margin : anchor.x === 1 ? -margin : 0)
+      const y =
+        Math.round((pixels.height - over.height) * anchor.y) +
+        (anchor.y === 0 ? margin : anchor.y === 1 ? -margin : 0)
+      compositeOver(pixels, over, x, y, Math.max(0, Math.min(1, opacity)))
+      return pixels
+    }
     case 'adjust':
       adjustPixels(pixels, node.params)
       return pixels

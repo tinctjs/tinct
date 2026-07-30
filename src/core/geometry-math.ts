@@ -57,6 +57,17 @@ const GRAVITY_Y: Partial<Record<Gravity, number>> = {
 
 /**
  * @internal
+ * Anchor factors (0 = start edge, 0.5 = center, 1 = end edge) for a compass
+ * gravity, or null for content-aware gravities like `'face'`.
+ */
+export function compassFactors(gravity: Gravity): { x: number; y: number } | null {
+  const x = GRAVITY_X[gravity]
+  const y = GRAVITY_Y[gravity]
+  return x !== undefined && y !== undefined ? { x, y } : null
+}
+
+/**
+ * @internal
  * Resolve any `CropOptions` form into an integer rect clamped to the image.
  *
  * `pixels` is provided at render time so content-aware gravities can look at

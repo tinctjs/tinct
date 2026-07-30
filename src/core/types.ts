@@ -177,6 +177,31 @@ export interface AdjustOptions {
   gamma?: number
 }
 
+/**
+ * Options accepted by {@link TinctImage.overlay}.
+ *
+ * Placement uses the compass gravities only (`'face'` is for cropping);
+ * `margin` insets the overlay from the edges it is anchored to.
+ */
+export interface OverlayOptions {
+  /**
+   * Where to anchor the overlay.
+   * @defaultValue `'south-east'` (the classic watermark corner)
+   */
+  gravity?: Gravity
+  /**
+   * Inset in pixels from the anchored edge(s). Ignored on centered axes.
+   * @defaultValue `0`
+   */
+  margin?: number
+  /**
+   * Overlay opacity multiplier, `0..1`, applied on top of the overlay's own
+   * alpha channel.
+   * @defaultValue `1`
+   */
+  opacity?: number
+}
+
 /** Encodable output formats. */
 export type ExportFormat = 'png' | 'jpeg' | 'webp'
 
@@ -263,6 +288,18 @@ export type SerializedOp =
   | { readonly op: 'flip'; readonly params: { axis: FlipAxis } }
   | { readonly op: 'adjust'; readonly params: AdjustOptions }
   | { readonly op: 'filter'; readonly params: { name: string; options: JsonObject } }
+  | {
+      readonly op: 'overlay'
+      /**
+       * The overlay pixels are inlined (dimensions + base64 RGBA) so
+       * histories stay self-contained and replay anywhere without a
+       * registration step. Note the size cost: a 200×80 watermark adds
+       * ~85 kB to the serialized history.
+       */
+      readonly params: {
+        source: { width: number; height: number; data64: string }
+      } & OverlayOptions
+    }
 
 /**
  * Runtime capabilities detected in the current environment.

@@ -36,6 +36,7 @@ export type {
   JsonObject,
   JsonValue,
   LoadOptions,
+  OverlayOptions,
   Percent,
   PixelValue,
   ProgressEventData,
