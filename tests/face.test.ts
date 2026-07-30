@@ -61,6 +61,71 @@ describe('subject detection', () => {
     expect(a).toEqual(b)
   })
 
+  test('prefers a textured face over larger flat skin-toned regions', () => {
+    // Regression from the real-photo eval: skin-chroma fabric/walls (tan
+    // rocks, red napkins, gold suits) must not out-score an actual face.
+    const p = scene(320, 240, 240, 80, 40)
+    // A big flat skin-toned rectangle (like a sandstone wall) on the left.
+    for (let y = 60; y < 220; y++) {
+      for (let x = 20; x < 140; x++) {
+        const i = (y * 320 + x) * 4
+        p.data[i] = 210
+        p.data[i + 1] = 165
+        p.data[i + 2] = 135
+      }
+    }
+    // Give the "face" disc facial texture: two dark eyes and a mouth.
+    for (const [ex, ey, ew, eh] of [
+      [226, 70, 8, 5],
+      [254, 70, 8, 5],
+      [240, 98, 12, 5],
+    ] as const) {
+      for (let y = ey - eh; y <= ey + eh; y++) {
+        for (let x = ex - ew; x <= ex + ew; x++) {
+          const i = (y * 320 + x) * 4
+          p.data[i] = 30
+          p.data[i + 1] = 20
+          p.data[i + 2] = 20
+        }
+      }
+    }
+    const focal = locateSubject(p)
+    expect(Math.abs(focal.x - 240)).toBeLessThan(45)
+    expect(Math.abs(focal.y - 80)).toBeLessThan(45)
+  })
+
+  test('rejects crimson fabric (blue above green) as skin', () => {
+    // Crimson block alone must not register as a skin subject; with no skin
+    // and no other structure, detection falls back to saliency on the block.
+    const p = createPixelData(200, 200)
+    for (let i = 0; i < p.data.length; i += 4) {
+      p.data[i] = 15
+      p.data[i + 1] = 15
+      p.data[i + 2] = 15
+      p.data[i + 3] = 255
+    }
+    for (let y = 40; y < 120; y++) {
+      for (let x = 40; x < 120; x++) {
+        const i = (y * 200 + x) * 4
+        p.data[i] = 150
+        p.data[i + 1] = 50
+        p.data[i + 2] = 60 // b > g → not skin
+      }
+    }
+    // Small real-skin disc bottom-right must win over the big crimson block.
+    for (let y = 150; y < 180; y++) {
+      for (let x = 150; x < 180; x++) {
+        const i = (y * 200 + x) * 4
+        p.data[i] = 224
+        p.data[i + 1] = 172
+        p.data[i + 2] = 138
+      }
+    }
+    const focal = locateSubject(p)
+    expect(focal.x).toBeGreaterThan(120)
+    expect(focal.y).toBeGreaterThan(120)
+  })
+
   test('falls back to saliency when there is no skin', () => {
     // Flat dark image with one bright, saturated block off-center.
     const p = createPixelData(200, 200)
