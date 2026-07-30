@@ -1,0 +1,92 @@
+/**
+ * The CPU executor: walks an op list once, applying kernels in order.
+ * WebGL2 acceleration (Phase 3) plugs in behind this same interface.
+ *
+ * @packageDocumentation
+ * @internal
+ */
+
+import type { FilterDefinition } from './filter'
+import { filterRegistry } from './filter'
+import type { PixelData } from './pixel'
+import { clonePixelData } from './pixel'
+import type { SerializedOp } from './types'
+import { resolveCrop, resolveResize, rotateBounds } from './geometry-math'
+import { cropPixels, flipPixels, rotate90, rotateArbitrary } from '../cpu/geometry'
+import { resample } from '../cpu/resample'
+import { adjustPixels } from '../cpu/adjust'
+import { parseColor } from '../cpu/color'
+
+/** @internal Internal op node: a serialized op, with live filter definitions attached. */
+export type OpNode = SerializedOp & {
+  readonly definition?: FilterDefinition
+}
+
+/** @internal Progress callback: overall pct `0..1` plus the running op's name. */
+export type ProgressFn = (pct: number, op: string) => void
+
+/** @internal Execute `ops` over a copy of `source`; the source is never mutated. */
+export async function execute(
+  source: PixelData,
+  ops: readonly OpNode[],
+  onProgress?: ProgressFn,
+): Promise<PixelData> {
+  let current = clonePixelData(source)
+  for (let i = 0; i < ops.length; i++) {
+    const node = ops[i]!
+    onProgress?.(i / ops.length, node.op)
+    // Yield so consumers' progress UI can update between heavy ops.
+    await yieldToEventLoop()
+    current = runOp(current, node)
+  }
+  onProgress?.(1, 'done')
+  return current
+}
+
+function yieldToEventLoop(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0))
+}
+
+function runOp(pixels: PixelData, node: OpNode): PixelData {
+  switch (node.op) {
+    case 'crop':
+      return cropPixels(pixels, resolveCrop(node.params, pixels.width, pixels.height))
+    case 'resize': {
+      const plan = resolveResize(node.params, pixels.width, pixels.height)
+      const scaled = resample(pixels, plan.scaled.width, plan.scaled.height, node.params.kernel)
+      if (plan.out.width === plan.scaled.width && plan.out.height === plan.scaled.height) {
+        return scaled
+      }
+      // cover: center-crop the scaled image down to the requested box
+      return cropPixels(scaled, {
+        x: Math.floor((plan.scaled.width - plan.out.width) / 2),
+        y: Math.floor((plan.scaled.height - plan.out.height) / 2),
+        width: plan.out.width,
+        height: plan.out.height,
+      })
+    }
+    case 'rotate': {
+      const angle = ((node.params.angle % 360) + 360) % 360
+      if (angle === 0) return pixels
+      if (angle % 90 === 0) return rotate90(pixels, (angle / 90) as 1 | 2 | 3)
+      const bounds = rotateBounds(angle, pixels.width, pixels.height)
+      const background = parseColor(node.params.background ?? 'transparent')
+      return rotateArbitrary(pixels, angle, bounds.width, bounds.height, background)
+    }
+    case 'flip':
+      return flipPixels(pixels, node.params.axis)
+    case 'adjust':
+      adjustPixels(pixels, node.params)
+      return pixels
+    case 'filter': {
+      const definition = node.definition ?? filterRegistry.get(node.params.name)
+      if (!definition) {
+        throw new Error(
+          `tinct: filter '${node.params.name}' is not registered — import it from 'tinctjs/filters' (or define it with defineFilter) so its code is included in your bundle`,
+        )
+      }
+      const options = { ...definition.defaults, ...node.params.options }
+      return definition.fallback(pixels, options) ?? pixels
+    }
+  }
+}
