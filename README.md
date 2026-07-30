@@ -18,9 +18,10 @@ Tinct is the Lodash of image editing: a library, not an app. Chainable, lazy,
 immutable pipelines over Canvas 2D — with transparent WebGL2 acceleration where
 available — that UI tools can be built on top of.
 
-> **Status:** pre-release, feature-complete for v0.1.0. CPU path, WebGL2
-> acceleration (color ops), and worker offloading are implemented; the same
-> pipeline renders identically everywhere — acceleration only changes speed.
+> **Status:** pre-release, feature-complete for the initial release. CPU
+> path, WebGL2 acceleration (verified against the CPU reference on real
+> WebGL2 in CI), and worker offloading are implemented; the same pipeline
+> renders identically everywhere — acceleration only changes speed.
 
 ## Installation
 
@@ -89,17 +90,23 @@ image.on('progress', ({ pct }) => {
 | `.rotate(angle, options?)`     | 90° increments lossless; arbitrary angles expand the canvas                                                                                                                                                                       |
 | `.flip(axis)`                  | `'horizontal'` or `'vertical'`                                                                                                                                                                                                    |
 | `.adjust(options)`             | brightness, contrast, saturation, exposure (`-1..1`), hue (deg), gamma                                                                                                                                                            |
+| `.overlay(pixels, options?)`   | Watermark/logo compositing with gravity, margin, opacity                                                                                                                                                                          |
 | `.apply(filter)`               | Apply a built-in or custom filter                                                                                                                                                                                                 |
 | `.history()`                   | Serialize the pipeline to JSON-safe ops                                                                                                                                                                                           |
 | `.pipe(ops)`                   | Replay serialized ops                                                                                                                                                                                                             |
 | `.on(event, listener)`         | `progress` events during rendering                                                                                                                                                                                                |
-| `.toBlob(options?)`            | Encode to PNG / JPEG / WebP                                                                                                                                                                                                       |
+| `.toBlob(options?)`            | Encode to PNG / JPEG / WebP; `maxBytes` targets a file size, `signal` cancels                                                                                                                                                     |
 | `.toDataURL(options?)`         | Encode to a data URL                                                                                                                                                                                                              |
 | `.toImageData()`               | Raw pixels                                                                                                                                                                                                                        |
 | `.toCanvas()`                  | Render into a canvas                                                                                                                                                                                                              |
 
 Built-in filters (`tinctjs/filters`): `grayscale`, `sepia`, `invert`, `blur`,
-`sharpen`, `pixelate`, `vignette`, `duotone`, `noise`, `posterize`.
+`sharpen`, `pixelate`, `vignette`, `duotone`, `noise`, `posterize`, `curves`
+(serializable tone curves — presets as JSON), and `median` (denoise).
+
+Companion modules, each ~1.5 kB and tree-shaken when unused: `tinctjs/face`
+(content-aware cropping), `tinctjs/hash` (ThumbHash placeholders),
+`tinctjs/palette` (dominant colors).
 
 ### Face-aware cropping
 
