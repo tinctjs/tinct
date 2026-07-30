@@ -53,9 +53,10 @@ export function parseColor(input: string): Rgba {
     }
   }
 
-  const fn = /^rgba?\(\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*(?:[,/]\s*([\d.]+%?)\s*)?\)$/.exec(
-    value,
-  )
+  const fn =
+    /^rgba?\(\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*[, ]\s*([\d.]+)\s*(?:[,/]\s*([\d.]+%?)\s*)?\)$/.exec(
+      value,
+    )
   if (fn) {
     const alpha = fn[4] === undefined ? 255 : parseAlpha(fn[4])
     return [clampByte(Number(fn[1])), clampByte(Number(fn[2])), clampByte(Number(fn[3])), alpha]

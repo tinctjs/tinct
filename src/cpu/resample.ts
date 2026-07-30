@@ -30,7 +30,10 @@ const KERNELS: Record<'lanczos' | 'triangle', KernelSpec> = {
 }
 
 /** @internal Pick the concrete kernel for a resize. */
-function pickKernel(kernel: ResizeKernel, downscaling: boolean): 'lanczos' | 'triangle' | 'nearest' {
+function pickKernel(
+  kernel: ResizeKernel,
+  downscaling: boolean,
+): 'lanczos' | 'triangle' | 'nearest' {
   if (kernel === 'auto') return downscaling ? 'lanczos' : 'triangle'
   return kernel
 }
