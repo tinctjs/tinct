@@ -9,7 +9,7 @@
 
 > Zero-dependency, TypeScript-first image editing for the browser. Small, composable, tree-shakeable.
 
-[![CI](https://github.com/azeemhassni/tinct/actions/workflows/ci.yml/badge.svg)](https://github.com/azeemhassni/tinct/actions/workflows/ci.yml)
+[![CI](https://github.com/tinctjs/tinct/actions/workflows/ci.yml/badge.svg)](https://github.com/tinctjs/tinct/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/tinctjs)](https://www.npmjs.com/package/tinctjs)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![types](https://img.shields.io/badge/types-TypeScript-3178c6.svg)](./src/index.ts)

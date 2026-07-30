@@ -6,7 +6,7 @@ read — contributions should too.
 ## Setup
 
 ```sh
-git clone https://github.com/azeemhassni/tinct.git
+git clone https://github.com/tinctjs/tinct.git
 cd tinct
 npm ci
 ```

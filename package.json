@@ -12,11 +12,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/azeemhassni/tinct.git"
+    "url": "git+https://github.com/tinctjs/tinct.git"
   },
-  "homepage": "https://github.com/azeemhassni/tinct#readme",
+  "homepage": "https://tinctjs.github.io/tinct/",
   "bugs": {
-    "url": "https://github.com/azeemhassni/tinct/issues"
+    "url": "https://github.com/tinctjs/tinct/issues"
   },
   "keywords": [
     "image",
