@@ -30,6 +30,14 @@ export default tseslint.config(
     },
   },
   {
+    files: ['src/cpu/**', 'src/filters/**', 'tests/**'],
+    rules: {
+      // Kernels index typed arrays heavily; with noUncheckedIndexedAccess on,
+      // bounds are guaranteed by loop structure and asserted with `!`.
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+  {
     files: ['**/*.js'],
     ...tseslint.configs.disableTypeChecked,
   },
