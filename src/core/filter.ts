@@ -6,6 +6,8 @@
  * @packageDocumentation
  */
 
+import type { PixelData } from './pixel'
+
 /**
  * Constraint for a filter's options bag. Options must be JSON-serializable
  * for {@link TinctImage.history} to round-trip; this is validated at
@@ -42,9 +44,12 @@ export interface FilterDefinition<TOptions extends FilterOptions = FilterOptions
   name: string
   /**
    * CPU implementation. A pure function over pixel data: mutate `pixels`
-   * in place and return nothing, or return a new `ImageData`.
+   * in place and return nothing, or return a new buffer.
+   *
+   * `PixelData` is structurally compatible with `ImageData` — in the browser
+   * the buffer handed to your kernel is backed by real `ImageData` bytes.
    */
-  fallback: (pixels: ImageData, options: Readonly<TOptions>) => ImageData | undefined
+  fallback: (pixels: PixelData, options: Readonly<TOptions>) => PixelData | undefined
   /**
    * Optional WebGL2 fragment shader (GLSL ES 3.00). Receives the source
    * image as `uniform sampler2D u_image` and texture coordinates as

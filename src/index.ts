@@ -20,6 +20,7 @@ export { tinct } from './core/tinct'
 export { TinctImage } from './core/editor'
 export { defineFilter } from './core/filter'
 export type { Filter, FilterDefinition, FilterFactory, FilterOptions } from './core/filter'
+export type { PixelData } from './core/pixel'
 export type {
   AdjustOptions,
   AspectRatio,

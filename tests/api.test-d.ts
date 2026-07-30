@@ -4,7 +4,7 @@
  */
 import { describe, expectTypeOf, test } from 'vitest'
 import { tinct, defineFilter, TinctImage } from '../src/index'
-import type { ExportOptions, SerializedOp, Unsubscribe } from '../src/index'
+import type { ExportOptions, PixelData, SerializedOp, Unsubscribe } from '../src/index'
 import { grayscale, blur, duotone, sepia } from '../src/filters/index'
 
 declare const image: TinctImage
@@ -86,7 +86,8 @@ describe('filters', () => {
     const swirl = defineFilter<{ angle: number }>({
       name: 'swirl',
       fallback: (pixels, options) => {
-        expectTypeOf(pixels).toEqualTypeOf<ImageData>()
+        expectTypeOf(pixels).toEqualTypeOf<PixelData>()
+        expectTypeOf<ImageData>().toExtend<PixelData>()
         expectTypeOf(options.angle).toBeNumber()
         return undefined
       },
