@@ -1,8 +1,8 @@
 # Tinct architecture
 
-This document explains how Tinct is put together and why. It describes the
-design the public API is built against; Phase 2 (CPU) and Phase 3 (WebGL2,
-workers) fill in the execution paths described here.
+This document explains how Tinct is put together and why. The CPU path
+described here is implemented and tested; the WebGL2/worker sections describe
+the Phase 3 design it was built to accommodate.
 
 ## Immutable op graph
 
@@ -72,8 +72,10 @@ it is imported._
 Boundaries that keep the package splittable later:
 
 - `core/` knows nothing about specific filters or codecs.
-- `filters/*` depend only on `core/filter`.
-- `io/`, `cpu/`, `gl/` are internal and reachable only through the executor.
+- `filters/*` depend only on `core/filter` and small `cpu/` kernels
+  (convolution, color parsing) — never on `io/` or each other.
+- `io/`, `cpu/`, `gl/` are internal and reachable only through the executor
+  and the editor's output methods.
 
 ## Execution paths
 

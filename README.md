@@ -11,8 +11,9 @@ Tinct is the Lodash of image editing: a library, not an app. Chainable, lazy,
 immutable pipelines over Canvas 2D — with transparent WebGL2 acceleration where
 available — that UI tools can be built on top of.
 
-> **Status:** pre-release. The public API below is under review (Phase 1);
-> implementations land in Phase 2 (CPU) and Phase 3 (WebGL2 + workers).
+> **Status:** pre-release. The public API is approved and the CPU execution
+> path is fully implemented and tested; WebGL2 acceleration, OffscreenCanvas
+> and worker offloading land in Phase 3 without changing public behavior.
 
 ## Installation
 
@@ -118,13 +119,13 @@ required or bundled.
 
 Enforced budgets in CI via [size-limit](https://github.com/ai/size-limit):
 
-| Import                          | Budget      |
-| ------------------------------- | ----------- |
-| Core (`tinct` + `defineFilter`) | ≤ 8 kB gzip |
-| Each individual filter          | ≤ 2 kB gzip |
+| Import                          | Budget      | Measured (brotli) |
+| ------------------------------- | ----------- | ----------------- |
+| Core (`tinct` + `defineFilter`) | ≤ 8 kB gzip | ~4.9 kB           |
+| Each individual filter          | ≤ 2 kB gzip | 0.26–0.52 kB      |
+| All ten filters together        | ≤ 10 kB     | ~2 kB             |
 
-Measured sizes are reported by `npm run size` (current pre-implementation
-figures are far below budget and will be updated as kernels land).
+Re-measure any time with `npm run size`; CI fails if a budget is exceeded.
 
 ## When to use Tinct
 
