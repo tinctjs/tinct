@@ -9,7 +9,7 @@ import { blendFn, type BlendMode } from '../cpu/blend'
 import type { LayerPlacement } from './types'
 
 /** @internal Everything about a layer except its content. */
-interface LayerState {
+export interface LayerState {
   readonly x: number
   readonly y: number
   readonly opacity: number

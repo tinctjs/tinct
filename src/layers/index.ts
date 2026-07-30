@@ -21,7 +21,7 @@
  * @packageDocumentation
  */
 
-export { document, TinctDocument } from './document'
+export { document, fromJSON, TinctDocument } from './document'
 export { layer, TinctLayer } from './layer'
 export type {
   BlendMode,

@@ -4,13 +4,15 @@
  * @packageDocumentation
  */
 
+import { base64ToBytes } from '../core/base64'
 import { TinctImage } from '../core/editor'
 import type { PixelData } from '../core/pixel'
 import type { RenderOptions, TinctEventMap, Unsubscribe } from '../core/types'
 import { parseColor } from '../cpu/color'
 import { compositeDocument, hitTest } from './composite'
 import { TinctLayer } from './layer'
-import type { DocumentOptions, LayerBounds, LayerRef, MoveDelta } from './types'
+import { DOCUMENT_VERSION, serializeDocument } from './serialize'
+import type { DocumentOptions, LayerBounds, LayerRef, MoveDelta, SerializedDocument } from './types'
 
 /** @internal Listener channel shared by a document and everything derived from it. */
 type Listeners = {
@@ -219,6 +221,21 @@ export class TinctDocument {
   }
 
   /**
+   * The document as JSON-safe data: a versioned envelope holding the canvas,
+   * a shared table of layer sources, and one entry per layer. Feed it to
+   * {@link fromJSON} to restore the document.
+   *
+   * Layer content is inlined as base64 so a saved document replays anywhere
+   * without a fetch, and sources shared by several layers are stored once.
+   * Note the size cost that implies — a 1000×1000 photo is ~5 MB of JSON.
+   *
+   * Defining `toJSON` also means `JSON.stringify(doc)` just works.
+   */
+  toJSON(): SerializedDocument {
+    return serializeDocument(this.#canvas, this.#layers)
+  }
+
+  /**
    * Listen for document events. Listeners are shared with every document
    * derived from this one, so attaching once observes all later edits.
    *
@@ -276,6 +293,11 @@ function clampIndex(index: number, max: number): number {
  * ```
  */
 export function document(options: DocumentOptions): TinctDocument {
+  return TinctDocument._create(validateCanvas(options))
+}
+
+/** Canvas properties are checked once, wherever a document comes from. */
+function validateCanvas(options: DocumentOptions): CanvasState {
   const width = Math.trunc(options.width)
   const height = Math.trunc(options.height)
   if (!(width > 0) || !(height > 0)) {
@@ -285,5 +307,60 @@ export function document(options: DocumentOptions): TinctDocument {
   }
   const background = options.background ?? 'transparent'
   parseColor(background) // fail here rather than at flatten time
-  return TinctDocument._create({ width, height, background })
+  return { width, height, background }
+}
+
+/**
+ * Rebuild a document from {@link TinctDocument.toJSON} output.
+ *
+ * Each source is decoded once and shared by every layer that references it,
+ * then each layer's ops are replayed onto it — so a serialized `filter` op
+ * needs its filter imported, exactly as {@link TinctImage.pipe} does.
+ * Unknown versions throw rather than replaying garbage: they came from a
+ * newer tinct.
+ *
+ * @example
+ * ```ts
+ * const saved = JSON.stringify(doc)
+ * const restored = fromJSON(JSON.parse(saved) as SerializedDocument)
+ * ```
+ */
+export function fromJSON(data: SerializedDocument): TinctDocument {
+  // Runtime data may carry any version despite the compile-time literal.
+  if ((data.version as number) !== DOCUMENT_VERSION) {
+    throw new Error(
+      `tinct: cannot read document version ${String(data.version)} — it was saved by a newer version of tinct`,
+    )
+  }
+
+  const decoded = new Map<string, TinctImage>()
+  for (const [id, source] of Object.entries(data.sources)) {
+    decoded.set(
+      id,
+      TinctImage._create({
+        width: source.width,
+        height: source.height,
+        data: base64ToBytes(source.data64),
+      }),
+    )
+  }
+
+  const layers = data.layers.map((entry) => {
+    const source = decoded.get(entry.source)
+    if (!source) {
+      throw new Error(
+        `tinct: a layer references source '${entry.source}', which is missing from the document's sources table`,
+      )
+    }
+    return TinctLayer._create(source.pipe(entry.ops), {
+      x: entry.x,
+      y: entry.y,
+      opacity: entry.opacity,
+      blend: entry.blend,
+      visible: entry.visible,
+      ...(entry.name !== undefined && { name: entry.name }),
+    })
+  })
+
+  return TinctDocument._create(validateCanvas(data.canvas), layers)
 }
