@@ -73,6 +73,7 @@
     "@eslint/js": "^10.0.1",
     "@size-limit/preset-small-lib": "^13.0.2",
     "eslint": "^10.8.0",
+    "jpeg-js": "^0.4.4",
     "prettier": "^3.9.6",
     "publint": "^0.3.22",
     "size-limit": "^13.0.2",
