@@ -15,6 +15,7 @@ export default defineConfig({
   resolve: {
     alias: {
       'tinctjs/filters': fileURLToPath(new URL('../src/filters/index.ts', import.meta.url)),
+      'tinctjs/face': fileURLToPath(new URL('../src/face/index.ts', import.meta.url)),
       tinctjs: fileURLToPath(new URL('../src/index.ts', import.meta.url)),
     },
   },
