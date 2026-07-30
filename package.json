@@ -74,14 +74,18 @@
     "size": "size-limit",
     "publint": "publint",
     "changeset": "changeset",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build && npm run publint && npm run size"
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build && npm run publint && npm run size",
+    "test:browser": "vitest run -c vitest.browser.config.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.1",
     "@eslint/js": "^10.0.1",
     "@size-limit/preset-small-lib": "^13.0.2",
+    "@vitest/browser": "^4.1.10",
+    "@vitest/browser-playwright": "^4.1.10",
     "eslint": "^10.8.0",
     "jpeg-js": "^0.4.4",
+    "playwright": "^1.62.0",
     "prettier": "^3.9.6",
     "publint": "^0.3.22",
     "size-limit": "^13.0.2",

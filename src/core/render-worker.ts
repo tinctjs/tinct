@@ -26,8 +26,8 @@ import {
   posterize,
   curves,
   median,
-} from '../filters/index'
-import { enableFaceGravity } from '../face/index'
+} from '../filters'
+import { enableFaceGravity } from '../face'
 
 // The worker supports every built-in capability, so 'face' crops offload too.
 enableFaceGravity()

@@ -25,7 +25,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['tests/**'],
+    files: ['tests/**', 'tests-browser/**'],
     rules: {
       // expectTypeOf(image.crop) inspects method types without binding them.
       '@typescript-eslint/unbound-method': 'off',
@@ -53,6 +53,7 @@ export default tseslint.config(
       'src/core/editor.ts',
       'src/core/render-cache.ts',
       'tests/**',
+      'tests-browser/**',
     ],
     rules: {
       // Kernels index typed arrays heavily; with noUncheckedIndexedAccess on,

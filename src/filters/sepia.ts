@@ -34,7 +34,10 @@ void main() {
     dot(c.rgb, vec3(0.349, 0.686, 0.168)),
     dot(c.rgb, vec3(0.272, 0.534, 0.131))
   );
-  outColor = vec4(mix(c.rgb, min(s, 1.0), u_amount), c.a);
+  // No early clamp: the CPU kernel lerps toward the unclamped matrix
+  // result and clamps only on the final byte write, which the UNORM
+  // render target replicates here.
+  outColor = vec4(mix(c.rgb, s, u_amount), c.a);
 }
 `,
   uniforms: ({ amount = 1 }) => ({ u_amount: amount }),
