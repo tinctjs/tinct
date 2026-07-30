@@ -80,23 +80,23 @@ image.on('progress', ({ pct }) => {
 
 ## API
 
-| API                            | Description                                                                        |
-| ------------------------------ | ---------------------------------------------------------------------------------- |
-| `tinct.load(source, options?)` | Load a `File`, `Blob`, URL, `ImageData`, `<img>`, `<canvas>`, or `OffscreenCanvas` |
-| `tinct.capabilities()`         | Feature detection: `{ webgl2, offscreenCanvas, workers }`                          |
-| `.crop(options)`               | Pixel/percent region, or aspect ratio + gravity (incl. content-aware `'face'`)     |
-| `.resize(options)`             | High-quality resampling (Lanczos multi-step downscale)                             |
-| `.rotate(angle, options?)`     | 90° increments lossless; arbitrary angles expand the canvas                        |
-| `.flip(axis)`                  | `'horizontal'` or `'vertical'`                                                     |
-| `.adjust(options)`             | brightness, contrast, saturation, exposure (`-1..1`), hue (deg), gamma             |
-| `.apply(filter)`               | Apply a built-in or custom filter                                                  |
-| `.history()`                   | Serialize the pipeline to JSON-safe ops                                            |
-| `.pipe(ops)`                   | Replay serialized ops                                                              |
-| `.on(event, listener)`         | `progress` events during rendering                                                 |
-| `.toBlob(options?)`            | Encode to PNG / JPEG / WebP                                                        |
-| `.toDataURL(options?)`         | Encode to a data URL                                                               |
-| `.toImageData()`               | Raw pixels                                                                         |
-| `.toCanvas()`                  | Render into a canvas                                                               |
+| API                            | Description                                                                                                                                                                                                                       |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tinct.load(source, options?)` | Load a `File`, `Blob`, URL, `ImageData`, `<img>`, `<canvas>`, or `OffscreenCanvas`. EXIF orientation is applied automatically; all other metadata (EXIF/GPS) is stripped on export — a privacy feature when handling user uploads |
+| `tinct.capabilities()`         | Feature detection: `{ webgl2, offscreenCanvas, workers }`                                                                                                                                                                         |
+| `.crop(options)`               | Pixel/percent region, or aspect ratio + gravity (incl. content-aware `'face'`)                                                                                                                                                    |
+| `.resize(options)`             | High-quality resampling (Lanczos multi-step downscale)                                                                                                                                                                            |
+| `.rotate(angle, options?)`     | 90° increments lossless; arbitrary angles expand the canvas                                                                                                                                                                       |
+| `.flip(axis)`                  | `'horizontal'` or `'vertical'`                                                                                                                                                                                                    |
+| `.adjust(options)`             | brightness, contrast, saturation, exposure (`-1..1`), hue (deg), gamma                                                                                                                                                            |
+| `.apply(filter)`               | Apply a built-in or custom filter                                                                                                                                                                                                 |
+| `.history()`                   | Serialize the pipeline to JSON-safe ops                                                                                                                                                                                           |
+| `.pipe(ops)`                   | Replay serialized ops                                                                                                                                                                                                             |
+| `.on(event, listener)`         | `progress` events during rendering                                                                                                                                                                                                |
+| `.toBlob(options?)`            | Encode to PNG / JPEG / WebP                                                                                                                                                                                                       |
+| `.toDataURL(options?)`         | Encode to a data URL                                                                                                                                                                                                              |
+| `.toImageData()`               | Raw pixels                                                                                                                                                                                                                        |
+| `.toCanvas()`                  | Render into a canvas                                                                                                                                                                                                              |
 
 Built-in filters (`tinctjs/filters`): `grayscale`, `sepia`, `invert`, `blur`,
 `sharpen`, `pixelate`, `vignette`, `duotone`, `noise`, `posterize`.

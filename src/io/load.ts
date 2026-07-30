@@ -54,7 +54,7 @@ function canvasToPixels(
 
 async function decodeBlob(blob: Blob): Promise<PixelData> {
   if (typeof createImageBitmap !== 'undefined') {
-    const bitmap = await createImageBitmap(blob)
+    const bitmap = await createOrientedBitmap(blob)
     try {
       return drawToPixels(bitmap, bitmap.width, bitmap.height)
     } finally {
@@ -66,6 +66,27 @@ async function decodeBlob(blob: Blob): Promise<PixelData> {
     return await decodeUrl(url)
   } finally {
     URL.revokeObjectURL(url)
+  }
+}
+
+/**
+ * Decode a Blob with EXIF orientation applied, so phone photos load upright.
+ *
+ * `'from-image'` is the spec default in current browsers, but it is passed
+ * explicitly to cover engines whose historical default was `'none'`
+ * (pre-2022 Firefox). Engines that reject the option dictionary entirely
+ * fall back to a plain decode. The `<img>`-based URL path needs no
+ * equivalent: browsers orient image elements by default.
+ */
+function createOrientedBitmap(blob: Blob): Promise<ImageBitmap> {
+  try {
+    // Unsupported dictionary values surface as sync throws in some engines
+    // and as rejections in others (WebIDL promise conversion) — cover both.
+    return createImageBitmap(blob, { imageOrientation: 'from-image' }).catch(() =>
+      createImageBitmap(blob),
+    )
+  } catch {
+    return createImageBitmap(blob)
   }
 }
 

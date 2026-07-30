@@ -13,6 +13,12 @@ import { decodeSource } from '../io/load'
  * {@link TinctImage} pipeline. Decoding happens eagerly; everything after
  * is lazy until an output method is awaited.
  *
+ * EXIF orientation is applied automatically, so phone photos load upright.
+ * Note that decoding to pixels drops all other metadata — exports contain
+ * no EXIF, GPS position, or camera serial data. That is usually what you
+ * want when handling user uploads; there is deliberately no option to
+ * carry metadata through.
+ *
  * @example
  * ```ts
  * const image = await tinct.load(file)
