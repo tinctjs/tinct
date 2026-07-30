@@ -6,10 +6,12 @@
 
 import type { Capabilities, ImageSource, LoadOptions } from './types'
 import { TinctImage } from './editor'
+import { decodeSource } from '../io/load'
 
 /**
  * Load an image from any supported source and get back an immutable
- * {@link TinctImage} pipeline.
+ * {@link TinctImage} pipeline. Decoding happens eagerly; everything after
+ * is lazy until an output method is awaited.
  *
  * @example
  * ```ts
@@ -19,10 +21,7 @@ import { TinctImage } from './editor'
  * ```
  */
 async function load(source: ImageSource, options?: LoadOptions): Promise<TinctImage> {
-  void source
-  void options
-  void TinctImage
-  return Promise.reject(new Error('tinct: load is not implemented yet (Phase 2)'))
+  return TinctImage._create(await decodeSource(source, options))
 }
 
 /**

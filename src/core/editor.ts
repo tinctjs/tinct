@@ -18,27 +18,14 @@ import type {
 } from './types'
 import { FILTER_DEFINITION, type Filter, type FilterDefinition, type FilterOptions } from './filter'
 import { resolveCrop, resolveResize, rotateBounds } from './geometry-math'
-
-/** @internal Pixel source a pipeline starts from. Concrete decoding lives in `io/`. */
-export interface SourceState {
-  readonly width: number
-  readonly height: number
-  /** Decoded pixels or a handle to them. Populated by `tinct.load` (Phase 2). */
-  readonly bitmap: unknown
-}
+import { execute, type OpNode } from './executor'
+import type { PixelData } from './pixel'
+import { pixelsToBlob, pixelsToCanvas, pixelsToDataURL, pixelsToImageData } from '../io/export'
 
 /** @internal Listener channel shared by an editor and everything derived from it. */
 type Listeners = {
   [K in keyof TinctEventMap]: Set<(data: TinctEventMap[K]) => void>
 }
-
-/** @internal Internal op node: a serialized op, with live filter definitions attached. */
-type OpNode = SerializedOp & {
-  readonly definition?: FilterDefinition
-}
-
-const notImplemented = (what: string): Error =>
-  new Error(`tinct: ${what} is not implemented yet (Phase 2)`)
 
 /**
  * An immutable image-editing pipeline.
@@ -53,20 +40,31 @@ const notImplemented = (what: string): Error =>
  * of the public API.
  */
 export class TinctImage {
-  readonly #source: SourceState
+  readonly #source: PixelData
   readonly #ops: readonly OpNode[]
   readonly #listeners: Listeners
 
   /** @internal Use {@link tinct.load}. */
-  private constructor(source: SourceState, ops: readonly OpNode[], listeners: Listeners) {
+  private constructor(source: PixelData, ops: readonly OpNode[], listeners: Listeners) {
     this.#source = source
     this.#ops = ops
     this.#listeners = listeners
   }
 
   /** @internal Entry point used by `tinct.load` and tests. */
-  static _create(source: SourceState): TinctImage {
+  static _create(source: PixelData): TinctImage {
     return new TinctImage(source, [], { progress: new Set() })
+  }
+
+  /**
+   * @internal
+   * Render the pipeline to raw pixels, emitting progress along the way.
+   * Public output methods and tests build on this.
+   */
+  _render(): Promise<PixelData> {
+    return execute(this.#source, this.#ops, (pct, op) => {
+      for (const listener of this.#listeners.progress) listener({ pct, op })
+    })
   }
 
   #derive(op: OpNode): TinctImage {
@@ -200,25 +198,23 @@ export class TinctImage {
   }
 
   /** Render the pipeline and encode the result as a `Blob`. */
-  toBlob(options?: ExportOptions): Promise<Blob> {
-    void options
-    return Promise.reject(notImplemented('toBlob'))
+  async toBlob(options?: ExportOptions): Promise<Blob> {
+    return pixelsToBlob(await this._render(), options)
   }
 
   /** Render the pipeline and encode the result as a data URL string. */
-  toDataURL(options?: ExportOptions): Promise<string> {
-    void options
-    return Promise.reject(notImplemented('toDataURL'))
+  async toDataURL(options?: ExportOptions): Promise<string> {
+    return pixelsToDataURL(await this._render(), options)
   }
 
   /** Render the pipeline and return raw pixels. */
-  toImageData(): Promise<ImageData> {
-    return Promise.reject(notImplemented('toImageData'))
+  async toImageData(): Promise<ImageData> {
+    return pixelsToImageData(await this._render())
   }
 
-  /** Render the pipeline into a canvas element. */
-  toCanvas(): Promise<HTMLCanvasElement> {
-    return Promise.reject(notImplemented('toCanvas'))
+  /** Render the pipeline into a fresh canvas element. */
+  async toCanvas(): Promise<HTMLCanvasElement> {
+    return pixelsToCanvas(await this._render())
   }
 
   /** @internal Output size derived from the op graph without rendering. */

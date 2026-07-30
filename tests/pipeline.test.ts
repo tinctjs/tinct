@@ -7,9 +7,11 @@ import { describe, expect, test } from 'vitest'
 import { TinctImage } from '../src/core/editor'
 import { defineFilter } from '../src/core/filter'
 import type { SerializedOp } from '../src/core/types'
+import { createPixelData } from '../src/core/pixel'
 import { grayscale, blur, duotone } from '../src/filters/index'
 
-const base = (): TinctImage => TinctImage._create({ width: 1920, height: 1080, bitmap: null })
+const SOURCE = createPixelData(1920, 1080)
+const base = (): TinctImage => TinctImage._create(SOURCE)
 
 describe('immutability', () => {
   test('operations return new instances and never mutate the receiver', () => {
