@@ -18,7 +18,7 @@ export type BlurOptions = {
  * image.apply(blur({ radius: 4 }))
  * ```
  */
-export const blur: FilterFactory<BlurOptions> = /* @__PURE__ */ defineFilter({
+export const blur: FilterFactory<BlurOptions> = /* @__PURE__ */ defineFilter<BlurOptions>({
   name: 'blur',
   defaults: { radius: 4 },
   fallback: cpuTodo('blur'),

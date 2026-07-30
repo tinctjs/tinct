@@ -18,7 +18,7 @@ export type DuotoneOptions = {
  * image.apply(duotone({ shadows: '#1e3a5f', highlights: '#f5d0a9' }))
  * ```
  */
-export const duotone: FilterFactory<DuotoneOptions> = /* @__PURE__ */ defineFilter({
+export const duotone: FilterFactory<DuotoneOptions> = /* @__PURE__ */ defineFilter<DuotoneOptions>({
   name: 'duotone',
   fallback: cpuTodo('duotone'),
 })

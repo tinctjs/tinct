@@ -16,7 +16,7 @@ import type {
   TinctEventMap,
   Unsubscribe,
 } from './types'
-import { FILTER_DEFINITION, type Filter, type FilterOptions } from './filter'
+import { FILTER_DEFINITION, type Filter, type FilterDefinition, type FilterOptions } from './filter'
 
 /** @internal Pixel source a pipeline starts from. Concrete decoding lives in `io/`. */
 export interface SourceState {
@@ -33,7 +33,7 @@ type Listeners = {
 
 /** @internal Internal op node: a serialized op, with live filter definitions attached. */
 type OpNode = SerializedOp & {
-  readonly definition?: Filter<FilterOptions>[typeof FILTER_DEFINITION]
+  readonly definition?: FilterDefinition
 }
 
 const notImplemented = (what: string): Error =>
@@ -152,7 +152,7 @@ export class TinctImage {
     return this.#derive({
       op: 'filter',
       params: { name: filter.name, options: filter.options as JsonObject },
-      definition: filter[FILTER_DEFINITION] as Filter<FilterOptions>[typeof FILTER_DEFINITION],
+      definition: filter[FILTER_DEFINITION] as unknown as FilterDefinition,
     })
   }
 
@@ -162,7 +162,11 @@ export class TinctImage {
    * Stable across versions — see `docs/architecture.md` for the format.
    */
   history(): readonly SerializedOp[] {
-    return this.#ops.map(({ definition: _definition, ...op }) => op)
+    return this.#ops.map((node) => {
+      const { definition, ...op } = node
+      void definition
+      return op
+    })
   }
 
   /**
@@ -252,9 +256,7 @@ function opSize(node: OpNode, w: number, h: number): [number, number] {
       if (width !== undefined && height !== undefined) {
         if (fit === 'fill') return [width, height]
         const scale = (fit === 'cover' ? Math.max : Math.min)(width / w, height / h)
-        return fit === 'cover'
-          ? [width, height]
-          : [Math.round(w * scale), Math.round(h * scale)]
+        return fit === 'cover' ? [width, height] : [Math.round(w * scale), Math.round(h * scale)]
       }
       if (width !== undefined) return [width, Math.round((h / w) * width)]
       if (height !== undefined) return [Math.round((w / h) * height), height]

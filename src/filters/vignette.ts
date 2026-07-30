@@ -29,8 +29,9 @@ export type VignetteOptions = {
  * image.apply(vignette({ amount: 0.6 }))
  * ```
  */
-export const vignette: FilterFactory<VignetteOptions> = /* @__PURE__ */ defineFilter({
-  name: 'vignette',
-  defaults: { amount: 0.5, radius: 0.75, color: '#000000' },
-  fallback: cpuTodo('vignette'),
-})
+export const vignette: FilterFactory<VignetteOptions> =
+  /* @__PURE__ */ defineFilter<VignetteOptions>({
+    name: 'vignette',
+    defaults: { amount: 0.5, radius: 0.75, color: '#000000' },
+    fallback: cpuTodo('vignette'),
+  })

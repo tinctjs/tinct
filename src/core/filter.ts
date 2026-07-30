@@ -74,7 +74,7 @@ export type FilterFactory<TOptions extends FilterOptions = FilterOptions> =
  *
  * @internal
  */
-export const filterRegistry = new Map<string, FilterDefinition<FilterOptions>>()
+export const filterRegistry = new Map<string, FilterDefinition>()
 
 /**
  * Define a custom filter and get back a serializable filter factory.
@@ -97,7 +97,7 @@ export const filterRegistry = new Map<string, FilterDefinition<FilterOptions>>()
 export function defineFilter<TOptions extends FilterOptions = Record<string, never>>(
   definition: FilterDefinition<TOptions>,
 ): FilterFactory<TOptions> {
-  filterRegistry.set(definition.name, definition as FilterDefinition<FilterOptions>)
+  filterRegistry.set(definition.name, definition as unknown as FilterDefinition)
   const factory = (options?: TOptions): Filter<TOptions> => {
     const merged = { ...definition.defaults, ...options } as TOptions
     return Object.freeze({
@@ -106,5 +106,5 @@ export function defineFilter<TOptions extends FilterOptions = Record<string, nev
       [FILTER_DEFINITION]: definition,
     })
   }
-  return factory as FilterFactory<TOptions>
+  return factory
 }

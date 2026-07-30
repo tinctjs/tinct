@@ -19,8 +19,9 @@ export type GrayscaleOptions = {
  * image.apply(grayscale({ amount: 0.5 }))
  * ```
  */
-export const grayscale: FilterFactory<GrayscaleOptions> = /* @__PURE__ */ defineFilter({
-  name: 'grayscale',
-  defaults: { amount: 1 },
-  fallback: cpuTodo('grayscale'),
-})
+export const grayscale: FilterFactory<GrayscaleOptions> =
+  /* @__PURE__ */ defineFilter<GrayscaleOptions>({
+    name: 'grayscale',
+    defaults: { amount: 1 },
+    fallback: cpuTodo('grayscale'),
+  })

@@ -12,7 +12,7 @@ export type InvertOptions = Record<string, never>
  * image.apply(invert())
  * ```
  */
-export const invert: FilterFactory<InvertOptions> = /* @__PURE__ */ defineFilter({
+export const invert: FilterFactory<InvertOptions> = /* @__PURE__ */ defineFilter<InvertOptions>({
   name: 'invert',
   fallback: cpuTodo('invert'),
 })

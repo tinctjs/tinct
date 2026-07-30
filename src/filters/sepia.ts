@@ -18,7 +18,7 @@ export type SepiaOptions = {
  * image.apply(sepia())
  * ```
  */
-export const sepia: FilterFactory<SepiaOptions> = /* @__PURE__ */ defineFilter({
+export const sepia: FilterFactory<SepiaOptions> = /* @__PURE__ */ defineFilter<SepiaOptions>({
   name: 'sepia',
   defaults: { amount: 1 },
   fallback: cpuTodo('sepia'),

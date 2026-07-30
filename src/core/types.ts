@@ -186,14 +186,7 @@ export interface ExportOptions {
 
 /** Sources accepted by {@link tinct.load}. */
 export type ImageSource =
-  | File
-  | Blob
-  | string
-  | URL
-  | ImageData
-  | HTMLImageElement
-  | HTMLCanvasElement
-  | OffscreenCanvas
+  File | Blob | string | URL | ImageData | HTMLImageElement | HTMLCanvasElement | OffscreenCanvas
 
 /** Options accepted by {@link tinct.load}. */
 export interface LoadOptions {

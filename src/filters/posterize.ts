@@ -18,8 +18,9 @@ export type PosterizeOptions = {
  * image.apply(posterize({ levels: 3 }))
  * ```
  */
-export const posterize: FilterFactory<PosterizeOptions> = /* @__PURE__ */ defineFilter({
-  name: 'posterize',
-  defaults: { levels: 4 },
-  fallback: cpuTodo('posterize'),
-})
+export const posterize: FilterFactory<PosterizeOptions> =
+  /* @__PURE__ */ defineFilter<PosterizeOptions>({
+    name: 'posterize',
+    defaults: { levels: 4 },
+    fallback: cpuTodo('posterize'),
+  })

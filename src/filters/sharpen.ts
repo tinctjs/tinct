@@ -18,7 +18,7 @@ export type SharpenOptions = {
  * image.apply(sharpen({ amount: 0.8 }))
  * ```
  */
-export const sharpen: FilterFactory<SharpenOptions> = /* @__PURE__ */ defineFilter({
+export const sharpen: FilterFactory<SharpenOptions> = /* @__PURE__ */ defineFilter<SharpenOptions>({
   name: 'sharpen',
   defaults: { amount: 0.5 },
   fallback: cpuTodo('sharpen'),

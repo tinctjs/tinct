@@ -30,7 +30,7 @@ export type NoiseOptions = {
  * image.apply(noise({ amount: 0.15 }))
  * ```
  */
-export const noise: FilterFactory<NoiseOptions> = /* @__PURE__ */ defineFilter({
+export const noise: FilterFactory<NoiseOptions> = /* @__PURE__ */ defineFilter<NoiseOptions>({
   name: 'noise',
   defaults: { amount: 0.1, monochrome: true, seed: 0 },
   fallback: cpuTodo('noise'),

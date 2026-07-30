@@ -18,8 +18,9 @@ export type PixelateOptions = {
  * image.apply(pixelate({ size: 12 }))
  * ```
  */
-export const pixelate: FilterFactory<PixelateOptions> = /* @__PURE__ */ defineFilter({
-  name: 'pixelate',
-  defaults: { size: 8 },
-  fallback: cpuTodo('pixelate'),
-})
+export const pixelate: FilterFactory<PixelateOptions> =
+  /* @__PURE__ */ defineFilter<PixelateOptions>({
+    name: 'pixelate',
+    defaults: { size: 8 },
+    fallback: cpuTodo('pixelate'),
+  })
