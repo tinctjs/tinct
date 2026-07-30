@@ -1,14 +1,17 @@
+/* eslint-disable @typescript-eslint/no-extraneous-class -- a bare stub class stands in for Worker */
 /**
  * Flattening: background, placement, clipping, stack order, blend modes,
  * opacity and visibility; dirty-layer caching; hit testing; progress and
  * cancellation.
  */
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { TinctImage } from '../src/core/editor'
+import type { OpNode } from '../src/core/executor'
 import { defineFilter } from '../src/core/filter'
 import type { PixelData } from '../src/core/pixel'
+import { shouldUseWorker } from '../src/core/worker-client'
 import { document, layer } from '../src/layers'
-import { px, solid } from './helpers'
+import { gradientH, px, solid } from './helpers'
 
 const image = (w: number, h: number, rgba: [number, number, number, number]) =>
   TinctImage._create(solid(w, h, rgba))
@@ -24,6 +27,20 @@ function counted(name: string) {
   const fallback = vi.fn((pixels: PixelData) => pixels)
   return { filter: defineFilter({ name, fallback }), calls: () => fallback.mock.calls.length }
 }
+
+/**
+ * A filter that runs a hook mid-pipeline. Set `trip` to abort a render from
+ * inside a layer's own kernel, which is the only way to land an abort
+ * *between* layers rather than before the first one.
+ */
+let trip: (() => void) | null = null
+const tripwire = defineFilter({
+  name: 'layers-tripwire',
+  fallback: (pixels: PixelData) => {
+    trip?.()
+    return pixels
+  },
+})
 
 describe('background', () => {
   test('an empty document is its background color', async () => {
@@ -304,5 +321,68 @@ describe('events and cancellation', () => {
     controller.abort()
     const doc = document({ width: 4, height: 4 }).add(layer(image(4, 4, RED)))
     await expect(doc.flatten()._render(controller.signal)).rejects.toThrow()
+  })
+
+  test('aborting between layers stops the stack where it is', async () => {
+    const controller = new AbortController()
+    const upper = counted('layers-abort-upper')
+    const doc = document({ width: 4, height: 4 })
+      .add(layer(image(4, 4, RED).apply(tripwire())).name('lower'))
+      .add(layer(image(4, 4, BLUE).apply(upper.filter())).name('upper'))
+
+    trip = () => {
+      controller.abort() // fires while the lower layer renders
+    }
+    await expect(doc.flatten()._render(controller.signal)).rejects.toThrow()
+    expect(upper.calls()).toBe(0) // the abort landed before the next layer
+  })
+
+  test('the same flattened image renders again after an abort', async () => {
+    const controller = new AbortController()
+    const upper = counted('layers-abort-retry')
+    const flat = document({ width: 4, height: 4 })
+      .add(layer(image(4, 4, RED).apply(tripwire())).name('lower'))
+      .add(layer(image(4, 4, BLUE).apply(upper.filter())).name('upper'))
+      .flatten()
+
+    trip = () => {
+      controller.abort()
+    }
+    await expect(flat._render(controller.signal)).rejects.toThrow()
+
+    // The rejected resolve must not be memoized against the descriptor.
+    trip = null
+    expect(px(await flat._render(), 0, 0)).toEqual(BLUE)
+    expect(upper.calls()).toBe(1)
+  })
+})
+
+describe('worker offloading', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  test('a layer pipeline big enough to offload still composites correctly', async () => {
+    // Node has no Worker; a constructor that throws exercises the same
+    // decision path a browser takes and then the fallback beneath it.
+    vi.stubGlobal(
+      'Worker',
+      class {
+        constructor() {
+          throw new Error('module workers unsupported')
+        }
+      },
+    )
+    const ops: OpNode[] = [{ op: 'flip', params: { axis: 'horizontal' } }]
+    const source = gradientH(1024, 512)
+    expect(shouldUseWorker(ops, source)).toBe(true) // the layer really does qualify
+
+    const out = await document({ width: 1024, height: 512 })
+      .add(layer(TinctImage._create(source).flip('horizontal')))
+      .flatten()
+      ._render()
+
+    expect([out.width, out.height]).toEqual([1024, 512])
+    expect(out.data[0]).toBe(255) // flipped: the gradient's brightest end is now leftmost
   })
 })
