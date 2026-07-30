@@ -4,10 +4,11 @@
  * @packageDocumentation
  */
 
-import type { TinctImage } from '../core/editor'
+import { TinctImage } from '../core/editor'
 import type { PixelData } from '../core/pixel'
-import type { TinctEventMap, Unsubscribe } from '../core/types'
+import type { RenderOptions, TinctEventMap, Unsubscribe } from '../core/types'
 import { parseColor } from '../cpu/color'
+import { compositeDocument, hitTest } from './composite'
 import { TinctLayer } from './layer'
 import type { DocumentOptions, LayerBounds, LayerRef, MoveDelta } from './types'
 
@@ -167,6 +168,57 @@ export class TinctDocument {
   }
 
   /**
+   * The top-most layer whose pixel under `(x, y)` is not fully transparent,
+   * or `null` if the point hits only background. Coordinates are canvas
+   * space and are floored to whole pixels.
+   *
+   * This is the primitive a selection UI needs, so it is alpha-aware rather
+   * than a bounding-box test: clicking the hole in a donut selects whatever
+   * is behind it. It is asynchronous because alpha needs pixels — but layers
+   * whose bounds exclude the point are rejected by arithmetic, and rendered
+   * layers come from the same cache {@link flatten} fills, so after a render
+   * it costs a lookup.
+   *
+   * @example
+   * ```ts
+   * canvas.addEventListener('pointerdown', async (e) => {
+   *   const hit = await doc.layerAt(e.offsetX, e.offsetY)
+   *   if (hit) select(hit.name())
+   * })
+   * ```
+   */
+  async layerAt(x: number, y: number, options?: RenderOptions): Promise<TinctLayer | null> {
+    return hitTest(this.#layers, this.#cache, x, y, options?.signal)
+  }
+
+  /**
+   * Composite the document into a single {@link TinctImage}.
+   *
+   * Nothing renders until an output method on the result is awaited, and the
+   * result is an ordinary pipeline — chain more operations onto it, export
+   * it, or use it as a layer source elsewhere.
+   *
+   * Layer pixels are cached per pipeline, so re-flattening after a move,
+   * reorder, opacity, or blend change re-runs only the composite loop.
+   *
+   * @example
+   * ```ts
+   * const blob = await doc.flatten().toBlob({ format: 'webp' })
+   * const thumb = await doc.flatten().resize({ width: 320 }).toBlob()
+   * ```
+   */
+  flatten(): TinctImage {
+    const canvas = this.#canvas
+    const layers = this.#layers
+    const cache = this.#cache
+    return TinctImage._create({
+      width: canvas.width,
+      height: canvas.height,
+      resolve: (signal) => compositeDocument(canvas, layers, cache, this.#emit, signal),
+    })
+  }
+
+  /**
    * Listen for document events. Listeners are shared with every document
    * derived from this one, so attaching once observes all later edits.
    *
@@ -178,6 +230,11 @@ export class TinctDocument {
   ): Unsubscribe {
     this.#listeners[event].add(listener)
     return () => this.#listeners[event].delete(listener)
+  }
+
+  /** Progress of the composite pass, on the channel shared by derived documents. */
+  readonly #emit = (pct: number, op: string): void => {
+    for (const listener of this.#listeners.progress) listener({ pct, op })
   }
 
   #indexOf(ref: LayerRef): number {
