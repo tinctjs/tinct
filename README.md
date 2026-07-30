@@ -222,7 +222,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md). Architecture notes live in
 
 Tinct's design owes a lot of its ideas and learnings to
 [Javed Ahmed](mailto:mjavedahmed4@gmail.com) and
-[Junaid Qadir](mailto:junaidqadirb@gmail.com).
+[Junaid Qadir](https://junaidqadir.com).
 
 ## License
 
