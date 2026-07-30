@@ -1,0 +1,163 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #14161a;
+  color: #e6e8ec;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #262a31;
+}
+
+h1 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+h1 span {
+  color: #7aa2ff;
+  font-weight: 400;
+}
+
+.badges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.badge {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid #3a4653;
+  color: #8b95a3;
+}
+
+.badge.on {
+  border-color: #2e7d4f;
+  color: #6fd598;
+}
+
+main {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: calc(100vh - 53px);
+}
+
+#controls {
+  overflow-y: auto;
+  padding: 1rem;
+  border-right: 1px solid #262a31;
+}
+
+#controls section,
+#controls details {
+  margin-bottom: 1rem;
+  border: 1px solid #262a31;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+#controls h2,
+#controls summary {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9aa4b2;
+  margin: 0 0 0.5rem;
+  cursor: pointer;
+}
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  margin: 0.5rem 0 0.25rem;
+  color: #c2c9d2;
+}
+
+input[type='range'] {
+  width: 100%;
+}
+
+select,
+input[type='color'],
+input[type='number'] {
+  width: 100%;
+  background: #1d2127;
+  color: inherit;
+  border: 1px solid #333944;
+  border-radius: 4px;
+  padding: 0.3rem;
+}
+
+button {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.45rem;
+  background: #2b3a55;
+  color: #dbe4ff;
+  border: 1px solid #3c5078;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #34486b;
+}
+
+#stage {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  overflow: auto;
+}
+
+#meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  color: #9aa4b2;
+}
+
+#progress {
+  width: 200px;
+}
+
+#preview {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  background:
+    repeating-conic-gradient(#1b1e24 0% 25%, #22262d 0% 50%) 0 0 / 24px 24px;
+  border-radius: 8px;
+  min-height: 0;
+}
+
+#preview canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+#history {
+  max-height: 200px;
+  overflow: auto;
+  font-size: 0.7rem;
+  background: #101215;
+  padding: 0.5rem;
+  border-radius: 6px;
+  white-space: pre-wrap;
+}
+
+.value {
+  color: #7aa2ff;
+  font-variant-numeric: tabular-nums;
+}

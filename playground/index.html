@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tinct Playground</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Tinct <span>playground</span></h1>
+      <div id="capabilities" class="badges"></div>
+    </header>
+
+    <main>
+      <aside id="controls">
+        <section>
+          <h2>Source</h2>
+          <input type="file" id="file" accept="image/*" />
+          <button id="sample" type="button">Use sample image</button>
+        </section>
+        <div id="panels"></div>
+        <section>
+          <h2>Export</h2>
+          <label>Format
+            <select id="format">
+              <option value="png">PNG</option>
+              <option value="jpeg">JPEG</option>
+              <option value="webp" selected>WebP</option>
+            </select>
+          </label>
+          <label>Quality <span id="quality-value">0.85</span>
+            <input type="range" id="quality" min="0.1" max="1" step="0.05" value="0.85" />
+          </label>
+          <button id="download" type="button">Download</button>
+          <button id="reset" type="button">Reset all</button>
+        </section>
+        <section>
+          <h2>History</h2>
+          <pre id="history"></pre>
+          <button id="replay" type="button">Replay history on original</button>
+        </section>
+      </aside>
+
+      <section id="stage">
+        <div id="meta">
+          <progress id="progress" max="1" value="0"></progress>
+          <span id="timing"></span>
+          <span id="dims"></span>
+        </div>
+        <div id="preview"></div>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
