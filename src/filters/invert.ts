@@ -1,5 +1,4 @@
 import { defineFilter, type FilterFactory } from '../core/filter'
-import { cpuTodo } from './internal'
 
 /** Options for {@link invert}. */
 export type InvertOptions = Record<string, never>
@@ -14,5 +13,13 @@ export type InvertOptions = Record<string, never>
  */
 export const invert: FilterFactory<InvertOptions> = /* @__PURE__ */ defineFilter<InvertOptions>({
   name: 'invert',
-  fallback: cpuTodo('invert'),
+  fallback: (pixels) => {
+    const { data } = pixels
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = 255 - data[i]!
+      data[i + 1] = 255 - data[i + 1]!
+      data[i + 2] = 255 - data[i + 2]!
+    }
+    return undefined
+  },
 })

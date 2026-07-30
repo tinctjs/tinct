@@ -1,5 +1,5 @@
 import { defineFilter, type FilterFactory } from '../core/filter'
-import { cpuTodo } from './internal'
+import { lerp } from './internal'
 
 /** Options for {@link sepia}. */
 export type SepiaOptions = {
@@ -11,7 +11,7 @@ export type SepiaOptions = {
 }
 
 /**
- * Warm, brownish vintage tone.
+ * Warm, brownish vintage tone (standard sepia matrix).
  *
  * @example
  * ```ts
@@ -21,5 +21,16 @@ export type SepiaOptions = {
 export const sepia: FilterFactory<SepiaOptions> = /* @__PURE__ */ defineFilter<SepiaOptions>({
   name: 'sepia',
   defaults: { amount: 1 },
-  fallback: cpuTodo('sepia'),
+  fallback: (pixels, { amount = 1 }) => {
+    const { data } = pixels
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i]!
+      const g = data[i + 1]!
+      const b = data[i + 2]!
+      data[i] = lerp(r, 0.393 * r + 0.769 * g + 0.189 * b, amount)
+      data[i + 1] = lerp(g, 0.349 * r + 0.686 * g + 0.168 * b, amount)
+      data[i + 2] = lerp(b, 0.272 * r + 0.534 * g + 0.131 * b, amount)
+    }
+    return undefined
+  },
 })
