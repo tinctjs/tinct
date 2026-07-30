@@ -20,4 +20,5 @@ export const BUILTIN_FILTER_NAMES: readonly string[] = [
   'duotone',
   'noise',
   'posterize',
+  'curves',
 ]

@@ -24,6 +24,7 @@ import {
   duotone,
   noise,
   posterize,
+  curves,
 } from '../filters/index'
 import { enableFaceGravity } from '../face/index'
 
@@ -43,6 +44,7 @@ const BUILTINS = {
   duotone,
   noise,
   posterize,
+  curves,
 }
 if (Object.keys(BUILTINS).length === 0) throw new Error('unreachable')
 
