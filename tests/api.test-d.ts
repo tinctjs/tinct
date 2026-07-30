@@ -4,7 +4,7 @@
  */
 import { describe, expectTypeOf, test } from 'vitest'
 import { tinct, defineFilter, TinctImage } from '../src/index'
-import type { ExportOptions, PixelData, SerializedOp, Unsubscribe } from '../src/index'
+import type { ExportOptions, PixelData, SerializedHistory, Unsubscribe } from '../src/index'
 import { grayscale, blur, duotone, sepia } from '../src/filters/index'
 
 declare const image: TinctImage
@@ -101,9 +101,10 @@ describe('filters', () => {
 
 describe('introspection and events', () => {
   test('history returns serialized ops and pipe accepts them', () => {
-    const ops = image.history()
-    expectTypeOf(ops).toEqualTypeOf<readonly SerializedOp[]>()
-    expectTypeOf(image.pipe).toBeCallableWith(ops)
+    const history = image.history()
+    expectTypeOf(history).toEqualTypeOf<SerializedHistory>()
+    expectTypeOf(image.pipe).toBeCallableWith(history)
+    expectTypeOf(image.pipe).toBeCallableWith(history.ops)
   })
 
   test('on() is typed per event and returns an unsubscribe', () => {

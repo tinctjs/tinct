@@ -5,7 +5,7 @@
 import { describe, expect, test } from 'vitest'
 import { TinctImage } from '../src/core/editor'
 import { inscribedBounds } from '../src/core/geometry-math'
-import type { SerializedOp } from '../src/core/types'
+import type { SerializedHistory } from '../src/core/types'
 import { px, solid } from './helpers'
 
 describe('inscribedBounds', () => {
@@ -61,8 +61,9 @@ describe('rotate with trim', () => {
 
   test('trim serializes and replays', async () => {
     const image = TinctImage._create(solid(64, 64, [50, 60, 70, 255])).rotate(30, { trim: true })
-    const ops = JSON.parse(JSON.stringify(image.history())) as SerializedOp[]
-    expect(ops[0]).toEqual({ op: 'rotate', params: { angle: 30, trim: true } })
+    const ops = JSON.parse(JSON.stringify(image.history())) as SerializedHistory
+    expect(ops.version).toBe(1)
+    expect(ops.ops[0]).toEqual({ op: 'rotate', params: { angle: 30, trim: true } })
     const replayed = TinctImage._create(solid(64, 64, [50, 60, 70, 255])).pipe(ops)
     const [a, b] = await Promise.all([image._render(), replayed._render()])
     expect(a.data).toEqual(b.data)

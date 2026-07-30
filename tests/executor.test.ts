@@ -6,7 +6,7 @@
 import { describe, expect, test } from 'vitest'
 import { TinctImage } from '../src/core/editor'
 import { defineFilter } from '../src/core/filter'
-import type { SerializedOp } from '../src/core/types'
+import type { SerializedHistory, SerializedOp } from '../src/core/types'
 import { grayscale, invert } from '../src/filters/index'
 import { gradientH, solid, px, expectPixelsClose } from './helpers'
 
@@ -64,7 +64,7 @@ describe('serialization and replay', () => {
       .adjust({ contrast: 0.2 })
       .apply(grayscale({ amount: 0.7 }))
 
-    const ops = JSON.parse(JSON.stringify(original.history())) as SerializedOp[]
+    const ops = JSON.parse(JSON.stringify(original.history())) as SerializedHistory
     const replayed = TinctImage._create(gradientH(16, 8)).pipe(ops)
 
     expectPixelsClose(await replayed._render(), await original._render(), 0)
@@ -104,7 +104,7 @@ describe('custom filters', () => {
     })
 
     const image = TinctImage._create(gradientH(8, 1)).apply(threshold({ cutoff: 100 }))
-    expect(image.history()).toEqual([
+    expect(image.history().ops).toEqual([
       { op: 'filter', params: { name: 'test-threshold', options: { cutoff: 100 } } },
     ])
 
@@ -114,7 +114,7 @@ describe('custom filters', () => {
 
     // And replays from serialized form via the registry.
     const replayed = TinctImage._create(gradientH(8, 1)).pipe(
-      JSON.parse(JSON.stringify(image.history())) as SerializedOp[],
+      JSON.parse(JSON.stringify(image.history())) as SerializedHistory,
     )
     expectPixelsClose(await replayed._render(), out, 0)
   })

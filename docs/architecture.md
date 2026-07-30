@@ -32,26 +32,32 @@ or a single shader chain (GPU) rather than N full-image passes.
 
 ## Serialization model
 
-`history()` returns the op list as JSON-safe data:
+`history()` returns a versioned envelope of JSON-safe ops:
 
 ```json
-[
-  { "op": "crop", "params": { "aspect": "16:9", "gravity": "center" } },
-  { "op": "filter", "params": { "name": "blur", "options": { "radius": 4 } } }
-]
+{
+  "version": 1,
+  "ops": [
+    { "op": "crop", "params": { "aspect": "16:9", "gravity": "center" } },
+    { "op": "filter", "params": { "name": "blur", "options": { "radius": 4 } } }
+  ]
+}
 ```
 
 Rules that keep this stable and versionable:
 
 - `op` names and param shapes are part of the public contract; they only ever
   gain optional fields.
-- Filters serialize as `name` + fully-defaulted `options`, never code.
-- A future format revision will wrap the array in a versioned envelope; v0.1
-  readers treat a bare array as version 1.
+- Filters serialize as `name` + fully-defaulted `options`, never code. The
+  `overlay` op inlines its pixels (base64) so histories stay self-contained.
+- The `version` field is how stored histories outlive format changes:
+  `pipe()` rejects versions it does not understand — from a newer tinct —
+  instead of replaying garbage. Bare op arrays (histories saved before the
+  envelope existed) are still accepted as version 1.
 
-`pipe(ops)` replays a serialized history onto any image. Built-in geometry and
-adjustment ops always replay. `filter` ops are resolved by name against the
-**filter registry** (below).
+`pipe(history)` replays a serialized history onto any image. Built-in
+geometry and adjustment ops always replay. `filter` ops are resolved by name
+against the **filter registry** (below).
 
 ## Filter registry and tree-shaking
 

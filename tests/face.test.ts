@@ -10,7 +10,7 @@ import { shouldUseWorker } from '../src/core/worker-client'
 import type { PixelData } from '../src/core/pixel'
 import { createPixelData } from '../src/core/pixel'
 import { enableFaceGravity, locateSubject } from '../src/face/index'
-import type { SerializedOp } from '../src/core/types'
+import type { SerializedHistory } from '../src/core/types'
 import { expectPixelsClose } from './helpers'
 
 afterEach(() => {
@@ -183,7 +183,7 @@ describe("crop with gravity: 'face'", () => {
     enableFaceGravity()
     const source = scene(320, 240, 220, 100)
     const edited = TinctImage._create(source).crop({ aspect: '1:1', gravity: 'face' })
-    const ops = JSON.parse(JSON.stringify(edited.history())) as SerializedOp[]
+    const ops = JSON.parse(JSON.stringify(edited.history())) as SerializedHistory
     const replayed = TinctImage._create(source).pipe(ops)
     expectPixelsClose(await replayed._render(), await edited._render(), 0)
   })

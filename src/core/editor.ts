@@ -14,6 +14,7 @@ import type {
   ResizeOptions,
   OverlayOptions,
   RotateOptions,
+  SerializedHistory,
   SerializedOp,
   TinctEventMap,
   Unsubscribe,
@@ -258,26 +259,46 @@ export class TinctImage {
   }
 
   /**
-   * The pipeline as JSON-safe data: one entry per queued operation, in order.
-   * Feed it to {@link pipe} (on this or any other image) to replay the edits.
-   * Stable across versions — see `docs/architecture.md` for the format.
+   * The pipeline as JSON-safe data: a versioned envelope with one op per
+   * queued operation, in order. Feed it to {@link pipe} (on this or any
+   * other image) to replay the edits. The version field lets stored
+   * histories survive future format changes — see `docs/architecture.md`.
    */
-  history(): readonly SerializedOp[] {
-    return this.#ops.map((node) => {
-      const { definition, ...op } = node
-      void definition
-      return op
-    })
+  history(): SerializedHistory {
+    return {
+      version: 1,
+      ops: this.#ops.map((node) => {
+        const { definition, ...op } = node
+        void definition
+        return op
+      }),
+    }
   }
 
   /**
-   * Replay serialized operations (from {@link history}) on top of this image.
+   * Replay a serialized history (from {@link history}) on top of this
+   * image. Accepts the versioned envelope or a bare op array (histories
+   * saved before the envelope existed). Unknown versions throw — they came
+   * from a newer tinct.
    *
    * `filter` ops are resolved by name against the filters present in your
    * bundle: importing a filter registers it. Replaying an op whose filter was
    * never imported throws a descriptive error at render time.
    */
-  pipe(ops: readonly SerializedOp[]): TinctImage {
+  pipe(history: SerializedHistory | readonly SerializedOp[]): TinctImage {
+    let ops: readonly SerializedOp[]
+    if (Array.isArray(history)) {
+      ops = history as readonly SerializedOp[]
+    } else {
+      const envelope = history as SerializedHistory
+      // Runtime data may carry any version despite the compile-time literal.
+      if ((envelope.version as number) !== 1) {
+        throw new Error(
+          `tinct: cannot replay history version ${String(envelope.version)} — it was saved by a newer version of tinct`,
+        )
+      }
+      ops = envelope.ops
+    }
     return ops.reduce<TinctImage>((image, op) => image.#derive(op), this)
   }
 

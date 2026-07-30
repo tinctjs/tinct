@@ -46,6 +46,7 @@ export type {
   ResizeKernel,
   ResizeOptions,
   RotateOptions,
+  SerializedHistory,
   SerializedOp,
   TinctEventMap,
   Unsubscribe,

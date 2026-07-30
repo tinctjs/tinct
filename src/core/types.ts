@@ -312,6 +312,20 @@ export type SerializedOp =
     }
 
 /**
+ * A serialized pipeline: a format version plus the op list. Produced by
+ * {@link TinctImage.history}; accepted by {@link TinctImage.pipe} (which
+ * also accepts a bare `SerializedOp[]` for histories saved before the
+ * envelope existed). The version lets stored histories outlive format
+ * changes: readers reject versions they do not understand instead of
+ * replaying garbage.
+ */
+export interface SerializedHistory {
+  /** Serialization format version. Currently always `1`. */
+  readonly version: 1
+  readonly ops: readonly SerializedOp[]
+}
+
+/**
  * Runtime capabilities detected in the current environment.
  * See {@link tinct.capabilities}.
  */

@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from 'vitest'
 import { TinctImage } from '../src/core/editor'
-import type { SerializedOp } from '../src/core/types'
+import type { SerializedHistory } from '../src/core/types'
 import { px, solid, expectRgbaClose } from './helpers'
 
 const logo = (w = 4, h = 4, rgba: [number, number, number, number] = [255, 0, 0, 255]) =>
@@ -77,7 +77,7 @@ describe('serialization', () => {
       logo(3, 3, [250, 250, 0, 200]),
       { gravity: 'south-west', margin: 1, opacity: 0.7 },
     )
-    const ops = JSON.parse(JSON.stringify(edited.history())) as SerializedOp[]
+    const ops = JSON.parse(JSON.stringify(edited.history())) as SerializedHistory
     const replayed = TinctImage._create(solid(12, 12, [0, 80, 160, 255])).pipe(ops)
     expect((await replayed._render()).data).toEqual((await edited._render()).data)
   })

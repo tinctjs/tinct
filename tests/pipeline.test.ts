@@ -6,7 +6,7 @@
 import { describe, expect, test } from 'vitest'
 import { TinctImage } from '../src/core/editor'
 import { defineFilter } from '../src/core/filter'
-import type { SerializedOp } from '../src/core/types'
+import type { SerializedHistory } from '../src/core/types'
 import { createPixelData } from '../src/core/pixel'
 import { grayscale, blur, duotone } from '../src/filters/index'
 
@@ -21,9 +21,9 @@ describe('immutability', () => {
 
     expect(cropped).not.toBe(original)
     expect(resized).not.toBe(cropped)
-    expect(original.history()).toHaveLength(0)
-    expect(cropped.history()).toHaveLength(1)
-    expect(resized.history()).toHaveLength(2)
+    expect(original.history().ops).toHaveLength(0)
+    expect(cropped.history().ops).toHaveLength(1)
+    expect(resized.history().ops).toHaveLength(2)
   })
 
   test('two branches from one instance stay independent', () => {
@@ -31,8 +31,8 @@ describe('immutability', () => {
     const a = root.rotate(90)
     const b = root.flip('vertical')
 
-    expect(a.history().map((o) => o.op)).toEqual(['resize', 'rotate'])
-    expect(b.history().map((o) => o.op)).toEqual(['resize', 'flip'])
+    expect(a.history().ops.map((o) => o.op)).toEqual(['resize', 'rotate'])
+    expect(b.history().ops.map((o) => o.op)).toEqual(['resize', 'flip'])
   })
 })
 
@@ -46,8 +46,9 @@ describe('history and replay', () => {
       .apply(grayscale())
       .apply(blur({ radius: 4 }))
 
-    const ops = edited.history()
-    expect(ops).toEqual([
+    const history = edited.history()
+    expect(history.version).toBe(1)
+    expect(history.ops).toEqual([
       { op: 'crop', params: { aspect: '16:9', gravity: 'center' } },
       { op: 'resize', params: { width: 1280 } },
       { op: 'rotate', params: { angle: 90 } },
@@ -55,17 +56,28 @@ describe('history and replay', () => {
       { op: 'filter', params: { name: 'grayscale', options: { amount: 1 } } },
       { op: 'filter', params: { name: 'blur', options: { radius: 4 } } },
     ])
-    expect(JSON.parse(JSON.stringify(ops))).toEqual(ops)
+    expect(JSON.parse(JSON.stringify(history))).toEqual(history)
   })
 
   test('pipe replays a serialized history onto a fresh image', () => {
     const edited = base().crop({ aspect: '1:1' }).resize({ width: 512 }).apply(grayscale())
-    const roundTripped = JSON.parse(JSON.stringify(edited.history())) as SerializedOp[]
+    const roundTripped = JSON.parse(JSON.stringify(edited.history())) as SerializedHistory
     const replayed = base().pipe(roundTripped)
 
     expect(replayed.history()).toEqual(edited.history())
     expect(replayed.width).toBe(edited.width)
     expect(replayed.height).toBe(edited.height)
+  })
+
+  test('pipe accepts bare op arrays (pre-envelope histories)', () => {
+    const edited = base().crop({ aspect: '1:1' }).resize({ width: 512 })
+    const replayed = base().pipe(edited.history().ops)
+    expect(replayed.history()).toEqual(edited.history())
+  })
+
+  test('pipe rejects histories from a newer format version', () => {
+    const future = { version: 2, ops: [] } as unknown as SerializedHistory
+    expect(() => base().pipe(future)).toThrow(/version 2.*newer version/)
   })
 })
 
@@ -119,7 +131,7 @@ describe('defineFilter', () => {
   test('required-option filters serialize their options into history', () => {
     const ops = base()
       .apply(duotone({ shadows: '#1e3a5f', highlights: '#f5d0a9' }))
-      .history()
+      .history().ops
     expect(ops[0]).toEqual({
       op: 'filter',
       params: { name: 'duotone', options: { shadows: '#1e3a5f', highlights: '#f5d0a9' } },

@@ -2,7 +2,13 @@
  * Tinct playground — a manual test bed exercising every v0.1 operation
  * through the public package API (`tinctjs` / `tinctjs/filters`).
  */
-import { tinct, type TinctImage, type SerializedOp, type Gravity, type ResizeKernel } from 'tinctjs'
+import {
+  tinct,
+  type TinctImage,
+  type SerializedHistory,
+  type Gravity,
+  type ResizeKernel,
+} from 'tinctjs'
 import {
   grayscale,
   sepia,
@@ -599,7 +605,7 @@ function wire(): void {
   $('replay').addEventListener('click', () => {
     void (async () => {
       if (!original) return
-      const ops = JSON.parse(historyView.textContent ?? '[]') as SerializedOp[]
+      const ops = JSON.parse(historyView.textContent ?? '[]') as SerializedHistory
       const started = performance.now()
       const canvas = await original.pipe(ops).toCanvas()
       timing.textContent = `replayed via .pipe(): ${(performance.now() - started).toFixed(1)} ms`
