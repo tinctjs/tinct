@@ -11,9 +11,9 @@ Tinct is the Lodash of image editing: a library, not an app. Chainable, lazy,
 immutable pipelines over Canvas 2D — with transparent WebGL2 acceleration where
 available — that UI tools can be built on top of.
 
-> **Status:** pre-release. The public API is approved and the CPU execution
-> path is fully implemented and tested; WebGL2 acceleration, OffscreenCanvas
-> and worker offloading land in Phase 3 without changing public behavior.
+> **Status:** pre-release, feature-complete for v0.1.0. CPU path, WebGL2
+> acceleration (color ops), and worker offloading are implemented; the same
+> pipeline renders identically everywhere — acceleration only changes speed.
 
 ## Installation
 
@@ -111,9 +111,15 @@ any modern bundler prunes the rest.
 ## Browser support
 
 Evergreen browsers (Chrome, Edge, Firefox, Safari 16.4+). Baseline execution
-uses Canvas 2D; WebGL2, `OffscreenCanvas`, and Web Workers are detected at
-runtime and used automatically, falling back gracefully. No polyfills are
-required or bundled.
+uses Canvas 2D + typed arrays; WebGL2 (color adjustments and per-pixel
+filters), Web Workers (heavy pipelines ≥ 512×512 without custom filters),
+and `OffscreenCanvas` are detected at runtime and used automatically, falling
+back gracefully. No polyfills are required or bundled.
+
+Indicative CPU-path timings on a 2000×1500 image (Node 24, M-series):
+Lanczos resize to 800px ≈ 50 ms, full adjust ≈ 60 ms, three color filters
+≈ 25 ms, gaussian blur (r=4) ≈ 310 ms. GPU/worker paths reduce main-thread
+cost for exactly these heavy cases.
 
 ## Bundle size
 
@@ -121,9 +127,12 @@ Enforced budgets in CI via [size-limit](https://github.com/ai/size-limit):
 
 | Import                          | Budget      | Measured (brotli) |
 | ------------------------------- | ----------- | ----------------- |
-| Core (`tinct` + `defineFilter`) | ≤ 8 kB gzip | ~4.9 kB           |
-| Each individual filter          | ≤ 2 kB gzip | 0.26–0.52 kB      |
-| All ten filters together        | ≤ 10 kB     | ~2 kB             |
+| Core (`tinct` + `defineFilter`) | ≤ 8 kB gzip | ~7.1 kB           |
+| Each individual filter          | ≤ 2 kB gzip | 0.44–0.52 kB      |
+| All ten filters together        | ≤ 10 kB     | ~2.5 kB           |
+
+Core includes the full CPU engine, the WebGL2 renderer, and the worker
+client. The worker itself is a separate lazily-loaded artifact.
 
 Re-measure any time with `npm run size`; CI fails if a budget is exceeded.
 

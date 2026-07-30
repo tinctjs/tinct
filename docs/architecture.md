@@ -84,42 +84,67 @@ changes public behavior, only speed.
 
 ### CPU path (`cpu/`, baseline and reference)
 
-Plain `ImageData` transforms on typed arrays. Geometry uses Canvas 2D where
-it is lossless (90° rotates, flips) and hand-written resampling where quality
-demands it — downscaling is multi-step / Lanczos, never a naive single-pass
+Pure typed-array transforms over structural `PixelData` (ImageData-compatible,
+DOM-free — which is why the whole suite runs in plain Node). Downscaling is a
+true Lanczos-3 convolution with kernel widening, never a naive single-pass
 `drawImage`. The CPU path is the reference implementation: correctness bugs
-here are release blockers, and GPU output is validated against it.
+here are release blockers, and GPU output is validated against it with
+tolerance-based comparisons.
 
 ### WebGL2 path (`gl/`)
 
-Color adjustments and filters compile to fragment shaders over a shared fullscreen-quad
-pipeline; chains of color ops render in one pass where possible.
-Filters opt in by providing a `fragment` shader in their definition; anything
-without one runs its CPU kernel, mid-pipeline, via readback. Geometry stays on
-the canvas/CPU path in v0.1.
+The executor batches consecutive GPU-able ops — `adjust`, plus any filter
+whose definition ships a `fragment` shader — into one texture session:
+upload once, run N ping-pong passes, read back once. Programs are cached per
+fragment source. Each queued pass carries its CPU twin, so a `null` from the
+backend (no context, compile failure, oversized texture, context loss)
+replays the batch through the CPU kernels with byte-identical semantics.
+
+GPU coverage in v0.1: the adjust pipeline and the per-pixel filters
+(`grayscale`, `sepia`, `invert`, `duotone`, `posterize`, `vignette`).
+Convolution and neighbourhood filters (`blur`, `sharpen`, `pixelate`) and
+seeded `noise` intentionally stay CPU-only — their GPU ports need care to
+match the reference output exactly, and correctness beats acceleration.
+Geometry also stays on the CPU path in v0.1.
+
+The adjust shader shares its coefficient math (`buildColorMatrix`) with the
+CPU kernel; the CPU quantizes to bytes between stages while the GPU stays in
+floats, so outputs may differ by a couple of LSB — within test tolerance.
 
 ## Feature detection and graceful fallback
 
-`tinct.capabilities()` probes once per realm:
+`tinct.capabilities()` reports `webgl2`, `offscreenCanvas`, and `workers`.
+Internally the GPU backend is created lazily and memoized per realm; any
+creation failure memoizes `null` and the executor never asks again. The
+fallback ladder never throws:
 
-- `webgl2` — can we get a `WebGL2RenderingContext`?
-- `offscreenCanvas` — is `OffscreenCanvas` constructible?
-- `workers` — is `Worker` available?
-
-The executor consults the same probes: WebGL2 unavailable (or context
-creation fails mid-run) → CPU path; `OffscreenCanvas` unavailable → hidden
-on-main-thread canvas. Failures degrade, never throw, and CPU/GPU output is
-kept aligned by tolerance-based tests.
+- WebGL2 missing/failing → CPU kernels (same output, tested byte-identical).
+- Worker missing/failing → main-thread render.
+- OffscreenCanvas missing → DOM canvas for I/O, hidden canvas for GL.
 
 ## OffscreenCanvas and worker strategy
 
-When both `workers` and `offscreenCanvas` are available, expensive renders
-move to a worker: the op list (already serializable — same format as
-`history()`) and source pixels are posted over, executed there, and the encoded
-result transferred back. Progress events are forwarded to the main thread.
-When unavailable, the same executor runs on the main thread in chunked slices
-so progress events still fire. Workers are created lazily and are inlined
-(no separate worker file to serve).
+Rendering needs no DOM at all (kernels are `PixelData` in, `PixelData` out),
+so the render worker is just the executor plus the built-in filter registry.
+`_render` offloads when **all** of these hold:
+
+- `Worker` exists, and a previous attempt has not failed;
+- the source is ≥ 512×512 (below that, copy + startup costs beat the win);
+- every op is worker-safe: geometry, adjustments, and _built-in_ filters.
+  Custom filters hold live function references that cannot cross threads,
+  so those pipelines render on the main thread.
+
+Buffers are transferred, not copied (the source is cloned first so the
+editor's own pixels are never detached). Progress messages are forwarded to
+the main-thread listeners. Any worker failure — constructor throw, CSP,
+missing module-worker support — marks the worker broken and falls back to a
+main-thread render of the same ops. Inside the worker, `execute()` will use
+WebGL2 via OffscreenCanvas when the browser exposes it there.
+
+The worker ships as a sibling build artifact (`dist/render-worker.js`)
+referenced via `new Worker(new URL('./render-worker.js', import.meta.url),
+{ type: 'module' })` — the pattern Vite, webpack 5, and Rollup understand and
+bundle automatically.
 
 ## Events
 
