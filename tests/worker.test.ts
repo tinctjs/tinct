@@ -3,6 +3,7 @@
  * Workers; a stubbed `Worker` global exercises the failure paths and the
  * decision logic. The happy path runs in browsers (playground).
  */
+/* eslint-disable @typescript-eslint/no-extraneous-class -- bare stub classes stand in for Worker */
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { shouldUseWorker } from '../src/core/worker-client'
 import { TinctImage } from '../src/core/editor'
