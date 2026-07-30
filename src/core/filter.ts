@@ -61,6 +61,16 @@ export interface FilterDefinition<TOptions extends FilterOptions = FilterOptions
   fragment?: string
   /** Maps filter options to values for the shader's custom uniforms. */
   uniforms?: (options: Readonly<TOptions>) => Record<string, number | readonly number[]>
+  /**
+   * Advanced alternative to `fragment`: a multi-pass GPU program. Each pass
+   * is a fragment shader (same contract as `fragment`) with its own uniform
+   * values; passes run in order, each reading the previous pass's output.
+   * Used by separable kernels like gaussian blur (horizontal then vertical).
+   * Takes precedence over `fragment` when both are present.
+   */
+  passes?: (
+    options: Readonly<TOptions>,
+  ) => { fragment: string; uniforms: Record<string, number | readonly number[]> }[]
   /** Default options, merged under the options given at the call site. */
   defaults?: Partial<TOptions>
 }

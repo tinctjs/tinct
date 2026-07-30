@@ -8,7 +8,7 @@
 import { afterEach, describe, expect, test } from 'vitest'
 import { _setGpuBackend, type GpuPass } from '../src/gl/backend'
 import { TinctImage } from '../src/core/editor'
-import { grayscale, invert, blur, sepia } from '../src/filters/index'
+import { grayscale, invert, blur, sepia, median } from '../src/filters/index'
 import { gradientH, solid } from './helpers'
 
 afterEach(() => {
@@ -20,7 +20,7 @@ const chain = (image: TinctImage): TinctImage =>
     .adjust({ brightness: 0.2 })
     .apply(grayscale())
     .apply(invert())
-    .apply(blur({ radius: 1 })) // no shader → CPU
+    .apply(median()) // no shader → CPU
     .apply(sepia())
 
 describe('gpu batching', () => {
@@ -35,10 +35,30 @@ describe('gpu batching', () => {
 
     await chain(TinctImage._create(gradientH(8, 8)))._render()
 
-    // adjust + grayscale + invert batch together; blur runs on CPU; sepia
+    // adjust + grayscale + invert batch together; median runs on CPU; sepia
     // flushes alone at the end.
     expect(batches.map((b) => b.length)).toEqual([3, 1])
     expect(batches[0]![0]!.uniforms.u_offset).toBeCloseTo(0.2)
+  })
+
+  test('separable blur contributes two directional passes to a batch', async () => {
+    const batches: GpuPass[][] = []
+    _setGpuBackend({
+      run: (pixels, passes) => {
+        batches.push([...passes])
+        return { ...pixels }
+      },
+    })
+
+    await TinctImage._create(gradientH(8, 8))
+      .apply(grayscale())
+      .apply(blur({ radius: 2 }))
+      ._render()
+
+    expect(batches.map((b) => b.length)).toEqual([3]) // grayscale + blur×2
+    expect(batches[0]![1]!.uniforms.u_direction).toEqual([1, 0])
+    expect(batches[0]![2]!.uniforms.u_direction).toEqual([0, 1])
+    expect(batches[0]![1]!.uniforms.u_sigma).toBe(2)
   })
 
   test('the GPU result is what downstream ops and outputs see', async () => {

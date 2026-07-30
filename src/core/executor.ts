@@ -41,9 +41,9 @@ export type OpNode = SerializedOp & {
 /** @internal Progress callback: overall pct `0..1` plus the running op's name. */
 export type ProgressFn = (pct: number, op: string) => void
 
-/** @internal A queued GPU pass paired with its CPU equivalent for fallback. */
+/** @internal One op's GPU passes paired with its CPU equivalent for fallback. */
 interface QueuedPass {
-  pass: GpuPass
+  passes: GpuPass[]
   cpu: (pixels: PixelData) => PixelData
 }
 
@@ -88,7 +88,7 @@ export async function execute(
     const gpuResult = backend
       ? backend.run(
           current,
-          batch.map((q) => q.pass),
+          batch.flatMap((q) => q.passes),
         )
       : null
     if (gpuResult) {
@@ -127,12 +127,12 @@ function yieldToEventLoop(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
-/** Ops the GPU can take: adjustments, and filters that ship a shader. */
+/** Ops the GPU can take: adjustments, and filters that ship shaders. */
 function toGpuPass(node: OpNode): QueuedPass | null {
   if (node.op === 'adjust') {
     const params = node.params
     return {
-      pass: { fragment: ADJUST_FRAGMENT, uniforms: adjustUniforms(params) },
+      passes: [{ fragment: ADJUST_FRAGMENT, uniforms: adjustUniforms(params) }],
       cpu: (pixels) => {
         adjustPixels(pixels, params)
         return pixels
@@ -141,15 +141,23 @@ function toGpuPass(node: OpNode): QueuedPass | null {
   }
   if (node.op === 'filter') {
     const definition = resolveDefinition(node)
-    if (!definition.fragment) return null
     const options = { ...definition.defaults, ...node.params.options }
-    return {
-      pass: {
-        fragment: definition.fragment,
-        uniforms: definition.uniforms ? definition.uniforms(options) : {},
-      },
-      cpu: (pixels) => definition.fallback(pixels, options) ?? pixels,
+    const cpu = (pixels: PixelData): PixelData => definition.fallback(pixels, options) ?? pixels
+    if (definition.passes) {
+      return { passes: definition.passes(options), cpu }
     }
+    if (definition.fragment) {
+      return {
+        passes: [
+          {
+            fragment: definition.fragment,
+            uniforms: definition.uniforms ? definition.uniforms(options) : {},
+          },
+        ],
+        cpu,
+      }
+    }
+    return null
   }
   return null
 }
