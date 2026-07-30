@@ -38,12 +38,21 @@ const IDENTITY_MATRIX = [1, 0, 0, 0, 1, 0, 0, 0, 1] as const
 
 /** @internal Uniforms for {@link ADJUST_FRAGMENT}, mirroring the CPU LUT math. */
 export function adjustUniforms(options: AdjustOptions): Record<string, number | readonly number[]> {
-  const { brightness = 0, contrast = 0, saturation = 0, exposure = 0, hue = 0, gamma = 1 } = options
+  const {
+    brightness = 0,
+    contrast = 0,
+    saturation = 0,
+    exposure = 0,
+    hue = 0,
+    gamma = 1,
+    temperature = 0,
+    tint = 0,
+  } = options
   return {
     u_gain: Math.pow(2, 2 * exposure),
     u_offset: brightness,
     u_slope: Math.min(1e4, Math.tan(((Math.min(contrast, 0.9999) + 1) * Math.PI) / 4)),
-    u_colorMatrix: buildColorMatrix(saturation, hue) ?? IDENTITY_MATRIX,
+    u_colorMatrix: buildColorMatrix(saturation, hue, temperature, tint) ?? IDENTITY_MATRIX,
     u_gamma: Math.max(0.1, Math.min(4, gamma)),
   }
 }

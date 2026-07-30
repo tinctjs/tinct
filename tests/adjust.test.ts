@@ -69,6 +69,39 @@ describe('adjust', () => {
     expect(px(dark, 0, 0)[0]).toBeLessThan(70)
   })
 
+  test('temperature warms toward amber and cools toward blue', () => {
+    const warm = grey()
+    adjustPixels(warm, { temperature: 1 })
+    const [wr, wg, wb] = px(warm, 0, 0)
+    expect(wr).toBeGreaterThan(wg)
+    expect(wb).toBeLessThan(wg)
+    expectRgbaClose(px(warm, 0, 0), [166, 128, 90, 255], 2) // ±30% gains on grey
+
+    const cool = grey()
+    adjustPixels(cool, { temperature: -1 })
+    const [cr, , cb] = px(cool, 0, 0)
+    expect(cr).toBeLessThan(cb)
+  })
+
+  test('tint shifts magenta and green', () => {
+    const magenta = grey()
+    adjustPixels(magenta, { tint: 1 })
+    const [mr, mg, mb] = px(magenta, 0, 0)
+    expect(mg).toBeLessThan(mr)
+    expect(mg).toBeLessThan(mb)
+
+    const green = grey()
+    adjustPixels(green, { tint: -1 })
+    expect(px(green, 0, 0)[1]).toBeGreaterThan(px(green, 0, 0)[0])
+  })
+
+  test('zero temperature and tint are a no-op', () => {
+    const p = solid(1, 1, [12, 200, 99, 255])
+    const before = [...p.data]
+    adjustPixels(p, { temperature: 0, tint: 0 })
+    expect([...p.data]).toEqual(before)
+  })
+
   test('alpha is never touched', () => {
     const p = solid(1, 1, [10, 20, 30, 137])
     adjustPixels(p, { brightness: 0.5, contrast: 0.5, saturation: 0.5, hue: 90, gamma: 2 })

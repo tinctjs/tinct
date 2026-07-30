@@ -15,10 +15,19 @@ import type { AdjustOptions } from '../core/types'
 
 /** @internal Apply adjustments in place. */
 export function adjustPixels(pixels: PixelData, options: AdjustOptions): void {
-  const { brightness = 0, contrast = 0, saturation = 0, exposure = 0, hue = 0, gamma = 1 } = options
+  const {
+    brightness = 0,
+    contrast = 0,
+    saturation = 0,
+    exposure = 0,
+    hue = 0,
+    gamma = 1,
+    temperature = 0,
+    tint = 0,
+  } = options
 
   const preLut = buildPreLut(exposure, brightness, contrast)
-  const matrix = buildColorMatrix(saturation, hue)
+  const matrix = buildColorMatrix(saturation, hue, temperature, tint)
   const gammaLut = buildGammaLut(gamma)
   const { data } = pixels
 
@@ -79,18 +88,27 @@ export const LUMA_R = 0.2126
 export const LUMA_G = 0.7152
 export const LUMA_B = 0.0722
 
+/** White-balance gain strength at |temperature| = 1 or |tint| = 1. */
+const WB_STRENGTH = 0.3
+
 /**
  * @internal
- * Combined saturation × hue-rotation 3×3 matrix (row-major), or null if
- * no-op. Shared with the WebGL2 adjust shader so both paths use identical
+ * Combined white-balance × saturation × hue-rotation 3×3 matrix (row-major),
+ * or null if no-op. White balance is a per-channel gain (applied first);
+ * shared with the WebGL2 adjust shader so both paths use identical
  * coefficients.
  */
-export function buildColorMatrix(saturation: number, hue: number): number[] | null {
-  if (saturation === 0 && hue === 0) return null
+export function buildColorMatrix(
+  saturation: number,
+  hue: number,
+  temperature = 0,
+  tint = 0,
+): number[] | null {
+  if (saturation === 0 && hue === 0 && temperature === 0 && tint === 0) return null
 
   // Saturation: lerp between luma projection (f=0) and identity (f=1).
   const f = 1 + saturation
-  const sat = [
+  let sat = [
     LUMA_R + (1 - LUMA_R) * f,
     LUMA_G * (1 - f),
     LUMA_B * (1 - f),
@@ -101,6 +119,26 @@ export function buildColorMatrix(saturation: number, hue: number): number[] | nu
     LUMA_G * (1 - f),
     LUMA_B + (1 - LUMA_B) * f,
   ]
+
+  if (temperature !== 0 || tint !== 0) {
+    // Diagonal gains applied before saturation/hue: warm pushes red up and
+    // blue down, magenta tint pulls green down (and vice versa).
+    const rGain = 1 + WB_STRENGTH * temperature
+    const gGain = 1 - WB_STRENGTH * tint
+    const bGain = 1 - WB_STRENGTH * temperature
+    // sat × diag(rGain, gGain, bGain): scale the columns.
+    sat = [
+      sat[0]! * rGain,
+      sat[1]! * gGain,
+      sat[2]! * bGain,
+      sat[3]! * rGain,
+      sat[4]! * gGain,
+      sat[5]! * bGain,
+      sat[6]! * rGain,
+      sat[7]! * gGain,
+      sat[8]! * bGain,
+    ]
+  }
 
   if (hue === 0) return sat
 

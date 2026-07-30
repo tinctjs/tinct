@@ -175,6 +175,16 @@ export interface AdjustOptions {
   hue?: number
   /** Gamma exponent, `0.1..4`, default `1`. */
   gamma?: number
+  /**
+   * White-balance temperature, `-1..1`, default `0`.
+   * Negative cools (toward blue), positive warms (toward amber).
+   */
+  temperature?: number
+  /**
+   * White-balance tint, `-1..1`, default `0`.
+   * Negative shifts green, positive shifts magenta.
+   */
+  tint?: number
 }
 
 /**
