@@ -1,5 +1,5 @@
 import { defineFilter, type FilterFactory } from '../core/filter'
-import { cpuTodo } from './internal'
+import { gaussianBlur } from '../cpu/convolve'
 
 /** Options for {@link blur}. */
 export type BlurOptions = {
@@ -21,5 +21,5 @@ export type BlurOptions = {
 export const blur: FilterFactory<BlurOptions> = /* @__PURE__ */ defineFilter<BlurOptions>({
   name: 'blur',
   defaults: { radius: 4 },
-  fallback: cpuTodo('blur'),
+  fallback: (pixels, { radius = 4 }) => gaussianBlur(pixels, Math.min(100, Math.max(0, radius))),
 })
