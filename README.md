@@ -135,6 +135,17 @@ contained a face). If your chain desaturates, crop with `'face'` _before_
 applying `grayscale()` — the crop sees the pixels at its position in the
 pipeline.
 
+## Examples
+
+Complete little apps built on the published package, live from this repo:
+
+- **[Avatar Studio](https://tinctjs.github.io/tinct/avatar-studio/)** — face-aware crops, look presets, size-budgeted WebP export
+- **[Lookbook](https://tinctjs.github.io/tinct/lookbook/)** — film presets as pure JSON, replayed with `pipe()`
+- **[Shrinkwrap](https://tinctjs.github.io/tinct/optimizer/)** — batch upload optimizer with ThumbHash placeholders and dominant colors
+
+Source in [`examples/`](./examples), each runnable with `npm install && npm run dev`.
+The interactive [playground](https://tinctjs.github.io/tinct/) exposes every operation.
+
 ## Tree-shaking
 
 Every filter is individually importable. If you only use `crop` and `resize`,

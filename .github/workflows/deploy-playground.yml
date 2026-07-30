@@ -22,13 +22,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+      - name: Build playground
+        run: npm install && npm run build
         working-directory: playground
-      - run: npm run build
-        working-directory: playground
+      - name: Build examples
+        run: |
+          for app in avatar-studio lookbook optimizer; do
+            (cd "examples/$app" && npm install && npm run build)
+          done
+      - name: Assemble site (playground at /, examples at /<name>/)
+        run: |
+          mkdir -p site
+          cp -r playground/dist/* site/
+          for app in avatar-studio lookbook optimizer; do
+            mkdir -p "site/$app"
+            cp -r "examples/$app/dist/"* "site/$app/"
+          done
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: playground/dist
+          path: site
 
   deploy:
     needs: build
