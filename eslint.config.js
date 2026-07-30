@@ -38,6 +38,8 @@ export default tseslint.config(
       'src/gl/**',
       'src/face/**',
       'src/core/executor.ts',
+      'src/core/editor.ts',
+      'src/core/render-cache.ts',
       'tests/**',
     ],
     rules: {

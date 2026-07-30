@@ -50,6 +50,13 @@ export function abortError(signal: AbortSignal): unknown {
 }
 
 /**
+ * @internal Notified whenever the pixels for `ops[0..index]` are fully
+ * materialized (GPU batches materialize at flush, so some indices skip).
+ * Used by the render cache; receivers must copy, not keep, the buffer.
+ */
+export type MaterializeFn = (index: number, pixels: PixelData) => void
+
+/**
  * @internal Execute `ops` over a copy of `source`; the source is never
  * mutated. Aborts take effect at operation boundaries (a running kernel is
  * never interrupted mid-buffer).
@@ -59,10 +66,12 @@ export async function execute(
   ops: readonly OpNode[],
   onProgress?: ProgressFn,
   signal?: AbortSignal,
+  onMaterialize?: MaterializeFn,
 ): Promise<PixelData> {
   const backend = getGpuBackend()
   let current = clonePixelData(source)
   let queued: QueuedPass[] = []
+  let lastQueuedIndex = -1
 
   const flush = (): void => {
     if (queued.length === 0) return
@@ -76,10 +85,11 @@ export async function execute(
       : null
     if (gpuResult) {
       current = gpuResult
-      return
+    } else {
+      // Graceful fallback: identical output via the CPU kernels.
+      for (const q of batch) current = q.cpu(current)
     }
-    // Graceful fallback: identical output via the CPU kernels.
-    for (const q of batch) current = q.cpu(current)
+    onMaterialize?.(lastQueuedIndex, current)
   }
 
   for (let i = 0; i < ops.length; i++) {
@@ -93,10 +103,12 @@ export async function execute(
     const gpuPass = backend ? toGpuPass(node) : null
     if (gpuPass) {
       queued.push(gpuPass)
+      lastQueuedIndex = i
       continue
     }
     flush()
     current = runCpuOp(current, node)
+    onMaterialize?.(i, current)
   }
   flush()
   onProgress?.(1, 'done')

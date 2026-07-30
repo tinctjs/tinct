@@ -20,6 +20,7 @@ import type {
 import { FILTER_DEFINITION, type Filter, type FilterDefinition, type FilterOptions } from './filter'
 import { resolveCrop, resolveResize, rotateBounds } from './geometry-math'
 import { execute, type OpNode } from './executor'
+import { RenderCache } from './render-cache'
 import { renderInWorker, shouldUseWorker } from './worker-client'
 import type { PixelData } from './pixel'
 import { pixelsToBlob, pixelsToCanvas, pixelsToDataURL, pixelsToImageData } from '../io/export'
@@ -45,44 +46,78 @@ export class TinctImage {
   readonly #source: PixelData
   readonly #ops: readonly OpNode[]
   readonly #listeners: Listeners
+  readonly #cache: RenderCache
 
   /** @internal Use {@link tinct.load}. */
-  private constructor(source: PixelData, ops: readonly OpNode[], listeners: Listeners) {
+  private constructor(
+    source: PixelData,
+    ops: readonly OpNode[],
+    listeners: Listeners,
+    cache: RenderCache,
+  ) {
     this.#source = source
     this.#ops = ops
     this.#listeners = listeners
+    this.#cache = cache
   }
 
   /** @internal Entry point used by `tinct.load` and tests. */
-  static _create(source: PixelData): TinctImage {
-    return new TinctImage(source, [], { progress: new Set() })
+  static _create(source: PixelData, cache = new RenderCache()): TinctImage {
+    return new TinctImage(source, [], { progress: new Set() }, cache)
   }
 
   /**
    * @internal
    * Render the pipeline to raw pixels, emitting progress along the way.
-   * Heavy, worker-safe pipelines render off the main thread; anything else
-   * (or any worker failure) renders locally. Public output methods and
-   * tests build on this.
+   *
+   * Renders are incremental: intermediate pixels are cached at op
+   * boundaries (bounded LRU shared by everything derived from one load), so
+   * re-rendering a chain whose prefix was rendered before only runs the
+   * changed suffix — the interactive-slider case costs one op, not the
+   * whole pipeline. Heavy, worker-safe suffixes render off the main thread;
+   * anything else (or any worker failure) renders locally. Public output
+   * methods and tests build on this.
    */
   async _render(signal?: AbortSignal): Promise<PixelData> {
-    const emit = (pct: number, op: string): void => {
-      for (const listener of this.#listeners.progress) listener({ pct, op })
+    // Start from the longest already-rendered prefix.
+    const keys = RenderCache.prefixKeys(this.#ops)
+    let start = 0
+    let source = this.#source
+    for (let i = this.#ops.length - 1; i >= 0; i--) {
+      const hit = this.#cache.get(keys[i]!)
+      if (hit) {
+        start = i + 1
+        source = hit
+        break
+      }
     }
-    if (shouldUseWorker(this.#ops, this.#source)) {
+    const ops = this.#ops.slice(start)
+
+    // Progress reflects the full pipeline: cached ops count as done.
+    const total = Math.max(1, this.#ops.length)
+    const emit = (pct: number, op: string): void => {
+      const overall = (start + pct * ops.length) / total
+      for (const listener of this.#listeners.progress) listener({ pct: overall, op })
+    }
+
+    if (shouldUseWorker(ops, source)) {
       try {
-        return await renderInWorker(this.#source, this.#ops, emit, signal)
+        const result = await renderInWorker(source, ops, emit, signal)
+        if (this.#ops.length > 0) this.#cache.set(keys[this.#ops.length - 1]!, result)
+        return result
       } catch (error) {
         // An abort is a deliberate stop — never fall back to a local render.
         if (signal?.aborted) throw error
         // Any other worker failure: render on the main thread instead.
       }
     }
-    return execute(this.#source, this.#ops, emit, signal)
+    return execute(source, ops, emit, signal, (index, pixels) => {
+      this.#cache.set(keys[start + index]!, pixels)
+    })
   }
 
   #derive(op: OpNode): TinctImage {
-    return new TinctImage(this.#source, [...this.#ops, op], this.#listeners)
+    return new TinctImage(this.#source, [...this.#ops, op], this.#listeners, this.#cache)
   }
 
   /**
