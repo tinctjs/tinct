@@ -47,7 +47,9 @@ function createBackend(): GpuBackend | null {
   try {
     const canvas = createGlCanvas()
     if (!canvas) return null
-    const gl = canvas.getContext('webgl2', {
+    // Both canvas kinds share this signature at runtime; the DOM union type
+    // does not narrow it, so route through the element overload.
+    const gl = (canvas as HTMLCanvasElement).getContext('webgl2', {
       premultipliedAlpha: false,
       preserveDrawingBuffer: false,
       antialias: false,

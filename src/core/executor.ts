@@ -1,6 +1,12 @@
 /**
- * The CPU executor: walks an op list once, applying kernels in order.
- * WebGL2 acceleration (Phase 3) plugs in behind this same interface.
+ * The executor: walks an op list once, applying kernels in order.
+ *
+ * Color work (adjustments and filters that ship a fragment shader) runs on
+ * the WebGL2 backend when one is available: consecutive GPU-able ops are
+ * batched into a single upload → N passes → readback session. Geometry and
+ * shaderless filters run their CPU kernels. If the GPU fails at any point
+ * (context loss, compile error, oversized texture) the batch is re-run
+ * through the same CPU kernels — output semantics never depend on the path.
  *
  * @packageDocumentation
  * @internal
@@ -16,6 +22,8 @@ import { cropPixels, flipPixels, rotate90, rotateArbitrary } from '../cpu/geomet
 import { resample } from '../cpu/resample'
 import { adjustPixels } from '../cpu/adjust'
 import { parseColor } from '../cpu/color'
+import { getGpuBackend, type GpuPass } from '../gl/backend'
+import { ADJUST_FRAGMENT, adjustUniforms } from '../gl/shaders'
 
 /** @internal Internal op node: a serialized op, with live filter definitions attached. */
 export type OpNode = SerializedOp & {
@@ -25,20 +33,50 @@ export type OpNode = SerializedOp & {
 /** @internal Progress callback: overall pct `0..1` plus the running op's name. */
 export type ProgressFn = (pct: number, op: string) => void
 
+/** @internal A queued GPU pass paired with its CPU equivalent for fallback. */
+interface QueuedPass {
+  pass: GpuPass
+  cpu: (pixels: PixelData) => PixelData
+}
+
 /** @internal Execute `ops` over a copy of `source`; the source is never mutated. */
 export async function execute(
   source: PixelData,
   ops: readonly OpNode[],
   onProgress?: ProgressFn,
 ): Promise<PixelData> {
+  const backend = getGpuBackend()
   let current = clonePixelData(source)
+  let queued: QueuedPass[] = []
+
+  const flush = (): void => {
+    if (queued.length === 0) return
+    const batch = queued
+    queued = []
+    const gpuResult = backend ? backend.run(current, batch.map((q) => q.pass)) : null
+    if (gpuResult) {
+      current = gpuResult
+      return
+    }
+    // Graceful fallback: identical output via the CPU kernels.
+    for (const q of batch) current = q.cpu(current)
+  }
+
   for (let i = 0; i < ops.length; i++) {
     const node = ops[i]!
     onProgress?.(i / ops.length, node.op)
     // Yield so consumers' progress UI can update between heavy ops.
     await yieldToEventLoop()
-    current = runOp(current, node)
+
+    const gpuPass = backend ? toGpuPass(node) : null
+    if (gpuPass) {
+      queued.push(gpuPass)
+      continue
+    }
+    flush()
+    current = runCpuOp(current, node)
   }
+  flush()
   onProgress?.(1, 'done')
   return current
 }
@@ -47,7 +85,34 @@ function yieldToEventLoop(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
-function runOp(pixels: PixelData, node: OpNode): PixelData {
+/** Ops the GPU can take: adjustments, and filters that ship a shader. */
+function toGpuPass(node: OpNode): QueuedPass | null {
+  if (node.op === 'adjust') {
+    const params = node.params
+    return {
+      pass: { fragment: ADJUST_FRAGMENT, uniforms: adjustUniforms(params) },
+      cpu: (pixels) => {
+        adjustPixels(pixels, params)
+        return pixels
+      },
+    }
+  }
+  if (node.op === 'filter') {
+    const definition = resolveDefinition(node)
+    if (!definition.fragment) return null
+    const options = { ...definition.defaults, ...node.params.options }
+    return {
+      pass: {
+        fragment: definition.fragment,
+        uniforms: definition.uniforms ? definition.uniforms(options) : {},
+      },
+      cpu: (pixels) => definition.fallback(pixels, options) ?? pixels,
+    }
+  }
+  return null
+}
+
+function runCpuOp(pixels: PixelData, node: OpNode): PixelData {
   switch (node.op) {
     case 'crop':
       return cropPixels(pixels, resolveCrop(node.params, pixels.width, pixels.height))
@@ -79,14 +144,19 @@ function runOp(pixels: PixelData, node: OpNode): PixelData {
       adjustPixels(pixels, node.params)
       return pixels
     case 'filter': {
-      const definition = node.definition ?? filterRegistry.get(node.params.name)
-      if (!definition) {
-        throw new Error(
-          `tinct: filter '${node.params.name}' is not registered — import it from 'tinctjs/filters' (or define it with defineFilter) so its code is included in your bundle`,
-        )
-      }
+      const definition = resolveDefinition(node)
       const options = { ...definition.defaults, ...node.params.options }
       return definition.fallback(pixels, options) ?? pixels
     }
   }
+}
+
+function resolveDefinition(node: OpNode & { op: 'filter' }): FilterDefinition {
+  const definition = node.definition ?? filterRegistry.get(node.params.name)
+  if (!definition) {
+    throw new Error(
+      `tinct: filter '${node.params.name}' is not registered — import it from 'tinctjs/filters' (or define it with defineFilter) so its code is included in your bundle`,
+    )
+  }
+  return definition
 }
