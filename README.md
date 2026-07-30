@@ -159,14 +159,19 @@ cost for exactly these heavy cases.
 
 Enforced budgets in CI via [size-limit](https://github.com/ai/size-limit):
 
-| Import                          | Budget      | Measured (brotli) |
-| ------------------------------- | ----------- | ----------------- |
-| Core (`tinct` + `defineFilter`) | ≤ 8 kB gzip | ~7.1 kB           |
-| Each individual filter          | ≤ 2 kB gzip | 0.44–0.52 kB      |
-| All ten filters together        | ≤ 10 kB     | ~2.5 kB           |
+| Import                              | Budget       | Measured (brotli) |
+| ----------------------------------- | ------------ | ----------------- |
+| Core (`tinct` + `defineFilter`)     | ≤ 10 kB gzip | ~8.6 kB           |
+| Each individual filter              | ≤ 2 kB gzip  | 0.44–0.52 kB      |
+| All filters together                | ≤ 10 kB      | ~3 kB             |
+| `tinctjs/face`, `/hash`, `/palette` | ≤ 2 kB each  | 1.2–1.6 kB        |
 
-Core includes the full CPU engine, the WebGL2 renderer, and the worker
-client. The worker itself is a separate lazily-loaded artifact.
+Core includes the full CPU engine, the WebGL2 renderer, the worker client,
+the incremental render cache, cancellation, and the overlay compositor. The
+original 8 kB budget was raised to 10 kB in v0.2 when the cache, overlay,
+and white-balance landed — measured honestly rather than split into
+micro-entry-points nobody would import separately. The worker is a separate
+lazily-loaded artifact.
 
 Re-measure any time with `npm run size`; CI fails if a budget is exceeded.
 

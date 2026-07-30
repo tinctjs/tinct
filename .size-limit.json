@@ -3,7 +3,7 @@
     "name": "core: tinct + defineFilter",
     "path": "dist/index.js",
     "import": "{ tinct, defineFilter }",
-    "limit": "8 kB"
+    "limit": "10 kB"
   },
   {
     "name": "single filter: grayscale",
