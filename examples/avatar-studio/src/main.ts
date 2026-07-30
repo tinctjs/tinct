@@ -16,12 +16,29 @@ const LOOKS: Record<string, (image: TinctImage) => TinctImage> = {
   warm: (i) =>
     i
       .adjust({ temperature: 0.35, saturation: 0.1, gamma: 0.95 })
-      .apply(curves({ rgb: [[0, 16], [128, 138], [255, 250]] }))
+      .apply(
+        curves({
+          rgb: [
+            [0, 16],
+            [128, 138],
+            [255, 250],
+          ],
+        }),
+      )
       .apply(vignette({ amount: 0.25 })),
   mono: (i) =>
     i
       .apply(grayscale())
-      .apply(curves({ rgb: [[0, 10], [110, 96], [200, 216], [255, 252]] }))
+      .apply(
+        curves({
+          rgb: [
+            [0, 10],
+            [110, 96],
+            [200, 216],
+            [255, 252],
+          ],
+        }),
+      )
       .apply(vignette({ amount: 0.35 })),
 }
 

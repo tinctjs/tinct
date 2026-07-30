@@ -72,7 +72,8 @@ async function processBatch(files: File[]): Promise<void> {
     try {
       const image = await tinct.load(file)
       let pipeline = image.width > maxWidth ? image.resize({ width: maxWidth }) : image
-      if (mark) pipeline = pipeline.overlay(mark, { gravity: 'south-east', margin: 14, opacity: 0.85 })
+      if (mark)
+        pipeline = pipeline.overlay(mark, { gravity: 'south-east', margin: 14, opacity: 0.85 })
 
       const [blob, pixels] = await Promise.all([
         pipeline.toBlob({ format: 'webp', maxBytes, signal }),

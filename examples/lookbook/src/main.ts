@@ -11,7 +11,7 @@ import { tinct, type SerializedHistory, type TinctImage } from 'tinctjs'
 // registry rule: code ships iff imported.
 import { curves, duotone, grayscale, noise, vignette } from 'tinctjs/filters'
 
-void curves, void duotone, void grayscale, void noise, void vignette
+;(void curves, void duotone, void grayscale, void noise, void vignette)
 
 const PRESETS: Record<string, SerializedHistory> = {
   Original: { version: 1, ops: [] },
@@ -19,32 +19,96 @@ const PRESETS: Record<string, SerializedHistory> = {
     version: 1,
     ops: [
       { op: 'adjust', params: { temperature: 0.4, saturation: 0.15, gamma: 0.95 } },
-      { op: 'filter', params: { name: 'curves', options: { rgb: [[0, 18], [130, 142], [255, 248]] } } },
-      { op: 'filter', params: { name: 'vignette', options: { amount: 0.3, radius: 0.7, color: '#000000' } } },
+      {
+        op: 'filter',
+        params: {
+          name: 'curves',
+          options: {
+            rgb: [
+              [0, 18],
+              [130, 142],
+              [255, 248],
+            ],
+          },
+        },
+      },
+      {
+        op: 'filter',
+        params: { name: 'vignette', options: { amount: 0.3, radius: 0.7, color: '#000000' } },
+      },
     ],
   },
   'Faded Film': {
     version: 1,
     ops: [
       { op: 'adjust', params: { contrast: -0.12, saturation: -0.2, tint: 0.12 } },
-      { op: 'filter', params: { name: 'curves', options: { rgb: [[0, 34], [128, 132], [255, 236]] } } },
-      { op: 'filter', params: { name: 'noise', options: { amount: 0.05, monochrome: true, seed: 7 } } },
+      {
+        op: 'filter',
+        params: {
+          name: 'curves',
+          options: {
+            rgb: [
+              [0, 34],
+              [128, 132],
+              [255, 236],
+            ],
+          },
+        },
+      },
+      {
+        op: 'filter',
+        params: { name: 'noise', options: { amount: 0.05, monochrome: true, seed: 7 } },
+      },
     ],
   },
   'Silver Gelatin': {
     version: 1,
     ops: [
       { op: 'filter', params: { name: 'grayscale', options: { amount: 1 } } },
-      { op: 'filter', params: { name: 'curves', options: { rgb: [[0, 8], [96, 74], [190, 214], [255, 252]] } } },
-      { op: 'filter', params: { name: 'noise', options: { amount: 0.07, monochrome: true, seed: 3 } } },
-      { op: 'filter', params: { name: 'vignette', options: { amount: 0.4, radius: 0.6, color: '#000000' } } },
+      {
+        op: 'filter',
+        params: {
+          name: 'curves',
+          options: {
+            rgb: [
+              [0, 8],
+              [96, 74],
+              [190, 214],
+              [255, 252],
+            ],
+          },
+        },
+      },
+      {
+        op: 'filter',
+        params: { name: 'noise', options: { amount: 0.07, monochrome: true, seed: 3 } },
+      },
+      {
+        op: 'filter',
+        params: { name: 'vignette', options: { amount: 0.4, radius: 0.6, color: '#000000' } },
+      },
     ],
   },
-  'Cyanotype': {
+  Cyanotype: {
     version: 1,
     ops: [
-      { op: 'filter', params: { name: 'duotone', options: { shadows: '#0b2545', highlights: '#e8f1f2' } } },
-      { op: 'filter', params: { name: 'curves', options: { rgb: [[0, 12], [128, 120], [255, 250]] } } },
+      {
+        op: 'filter',
+        params: { name: 'duotone', options: { shadows: '#0b2545', highlights: '#e8f1f2' } },
+      },
+      {
+        op: 'filter',
+        params: {
+          name: 'curves',
+          options: {
+            rgb: [
+              [0, 12],
+              [128, 120],
+              [255, 250],
+            ],
+          },
+        },
+      },
     ],
   },
 }

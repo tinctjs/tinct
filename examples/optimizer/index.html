@@ -5,60 +5,170 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Shrinkwrap — batch upload optimizer, a Tinct example</title>
     <style>
-      * { box-sizing: border-box; }
-      body { margin: 0; font-family: system-ui, sans-serif; background: #fbfbf9; color: #20242a; }
-      main { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.25rem; }
-      h1 { font-size: 1.5rem; margin: 0; letter-spacing: -0.02em; }
-      h1 span { color: #146c60; }
-      .sub { color: #6d747c; margin: 0.3rem 0 1.4rem; font-size: 0.92rem; max-width: 62ch; }
-      .drop {
-        border: 2px dashed #c9d2ce; border-radius: 14px; padding: 2.2rem 1rem; text-align: center;
-        color: #8a938f; cursor: pointer; background: #fff;
+      * {
+        box-sizing: border-box;
       }
-      .drop.armed { border-color: #146c60; color: #146c60; background: #f2f9f7; }
-      .opts { display: flex; gap: 1.4rem; margin: 1rem 0 1.6rem; flex-wrap: wrap; align-items: center; font-size: 0.85rem; color: #4b5157; }
-      .opts label { display: flex; gap: 0.45rem; align-items: center; }
-      select { font: inherit; padding: 0.3rem 0.5rem; border: 1px solid #c9d2ce; border-radius: 7px; background: #fff; }
-      table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-      th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #8a938f; padding: 0.5rem 0.6rem; border-bottom: 1px solid #e5e9e7; }
-      td { padding: 0.55rem 0.6rem; border-bottom: 1px solid #eef1ef; vertical-align: middle; font-variant-numeric: tabular-nums; }
-      .ph { width: 56px; height: 42px; border-radius: 6px; object-fit: cover; display: block; }
-      .chip { display: inline-block; width: 16px; height: 16px; border-radius: 4px; vertical-align: -3px; border: 1px solid rgba(0,0,0,0.12); }
-      .saving { color: #146c60; font-weight: 600; }
-      .dl { color: #146c60; }
-      input[type='file'] { display: none; }
-      .foot { margin-top: 1.4rem; font-size: 0.78rem; color: #8a938f; }
-      .foot a { color: #146c60; }
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: #fbfbf9;
+        color: #20242a;
+      }
+      main {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 2.5rem 1.25rem;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0;
+        letter-spacing: -0.02em;
+      }
+      h1 span {
+        color: #146c60;
+      }
+      .sub {
+        color: #6d747c;
+        margin: 0.3rem 0 1.4rem;
+        font-size: 0.92rem;
+        max-width: 62ch;
+      }
+      .drop {
+        border: 2px dashed #c9d2ce;
+        border-radius: 14px;
+        padding: 2.2rem 1rem;
+        text-align: center;
+        color: #8a938f;
+        cursor: pointer;
+        background: #fff;
+      }
+      .drop.armed {
+        border-color: #146c60;
+        color: #146c60;
+        background: #f2f9f7;
+      }
+      .opts {
+        display: flex;
+        gap: 1.4rem;
+        margin: 1rem 0 1.6rem;
+        flex-wrap: wrap;
+        align-items: center;
+        font-size: 0.85rem;
+        color: #4b5157;
+      }
+      .opts label {
+        display: flex;
+        gap: 0.45rem;
+        align-items: center;
+      }
+      select {
+        font: inherit;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid #c9d2ce;
+        border-radius: 7px;
+        background: #fff;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+      th {
+        text-align: left;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #8a938f;
+        padding: 0.5rem 0.6rem;
+        border-bottom: 1px solid #e5e9e7;
+      }
+      td {
+        padding: 0.55rem 0.6rem;
+        border-bottom: 1px solid #eef1ef;
+        vertical-align: middle;
+        font-variant-numeric: tabular-nums;
+      }
+      .ph {
+        width: 56px;
+        height: 42px;
+        border-radius: 6px;
+        object-fit: cover;
+        display: block;
+      }
+      .chip {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        vertical-align: -3px;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+      }
+      .saving {
+        color: #146c60;
+        font-weight: 600;
+      }
+      .dl {
+        color: #146c60;
+      }
+      input[type='file'] {
+        display: none;
+      }
+      .foot {
+        margin-top: 1.4rem;
+        font-size: 0.78rem;
+        color: #8a938f;
+      }
+      .foot a {
+        color: #146c60;
+      }
     </style>
   </head>
   <body>
     <main>
       <h1>Shrink<span>wrap</span></h1>
       <p class="sub">
-        Drop a batch of photos: each is auto-oriented, resized, compressed to a byte budget,
-        and given a ThumbHash placeholder + dominant color for instant-loading UIs — all
-        on-device with <code>tinctjs</code>.
+        Drop a batch of photos: each is auto-oriented, resized, compressed to a byte budget, and
+        given a ThumbHash placeholder + dominant color for instant-loading UIs — all on-device with
+        <code>tinctjs</code>.
       </p>
       <div class="drop" id="drop">drop images here — or click to choose (multiple ok)</div>
       <input type="file" id="file" accept="image/*" multiple />
       <div class="opts">
-        <label>Max width
-          <select id="maxw"><option>1200</option><option selected>1600</option><option>2400</option></select>
+        <label
+          >Max width
+          <select id="maxw">
+            <option>1200</option>
+            <option selected>1600</option>
+            <option>2400</option>
+          </select>
         </label>
-        <label>Budget / image
-          <select id="budget"><option value="150000">150 kB</option><option value="300000" selected>300 kB</option><option value="600000">600 kB</option></select>
+        <label
+          >Budget / image
+          <select id="budget">
+            <option value="150000">150 kB</option>
+            <option value="300000" selected>300 kB</option>
+            <option value="600000">600 kB</option>
+          </select>
         </label>
         <label><input type="checkbox" id="mark" /> watermark</label>
       </div>
       <table hidden id="table">
         <thead>
-          <tr><th>Placeholder</th><th>File</th><th>Before</th><th>After</th><th>Saved</th><th>Color</th><th></th></tr>
+          <tr>
+            <th>Placeholder</th>
+            <th>File</th>
+            <th>Before</th>
+            <th>After</th>
+            <th>Saved</th>
+            <th>Color</th>
+            <th></th>
+          </tr>
         </thead>
         <tbody id="rows"></tbody>
       </table>
       <p class="foot">
-        The “Placeholder” column is rendered from the ~25-byte ThumbHash, not the image —
-        that's what your users see while the real file loads.
+        The “Placeholder” column is rendered from the ~25-byte ThumbHash, not the image — that's
+        what your users see while the real file loads.
         <a href="https://github.com/tinctjs/tinct">github.com/tinctjs/tinct</a>
       </p>
     </main>
