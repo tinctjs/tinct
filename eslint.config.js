@@ -45,6 +45,7 @@ export default tseslint.config(
     files: [
       'src/cpu/**',
       'src/filters/**',
+      'src/layers/**',
       'src/gl/**',
       'src/face/**',
       'src/hash/**',
