@@ -49,6 +49,10 @@
       "types": "./dist/face/index.d.ts",
       "import": "./dist/face/index.js"
     },
+    "./hash": {
+      "types": "./dist/hash/index.d.ts",
+      "import": "./dist/hash/index.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/index.js",

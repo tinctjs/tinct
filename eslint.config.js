@@ -29,6 +29,16 @@ export default tseslint.config(
     rules: {
       // expectTypeOf(image.crop) inspects method types without binding them.
       '@typescript-eslint/unbound-method': 'off',
+      // The vendored thumbhash oracle is untyped JS.
+      '@typescript-eslint/no-unsafe-call': 'off',
+    },
+  },
+  // Vendored third-party test oracles keep their upstream style.
+  {
+    files: ['tests/vendor/**'],
+    rules: {
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      'no-undef': 'off',
     },
   },
   {
@@ -37,6 +47,7 @@ export default tseslint.config(
       'src/filters/**',
       'src/gl/**',
       'src/face/**',
+      'src/hash/**',
       'src/core/executor.ts',
       'src/core/editor.ts',
       'src/core/render-cache.ts',

@@ -27,5 +27,11 @@
     "path": "dist/face/index.js",
     "import": "{ enableFaceGravity }",
     "limit": "2 kB"
+  },
+  {
+    "name": "thumbhash",
+    "path": "dist/hash/index.js",
+    "import": "{ thumbHash }",
+    "limit": "2 kB"
   }
 ]
