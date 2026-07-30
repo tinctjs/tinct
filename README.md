@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/logo-dark-mode.svg">
+    <img src="./assets/logo.svg" alt="Tinct" width="96" height="96">
+  </picture>
+</p>
+
 # Tinct
 
 > Zero-dependency, TypeScript-first image editing for the browser. Small, composable, tree-shakeable.
