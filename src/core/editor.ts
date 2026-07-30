@@ -19,6 +19,7 @@ import type {
 import { FILTER_DEFINITION, type Filter, type FilterDefinition, type FilterOptions } from './filter'
 import { resolveCrop, resolveResize, rotateBounds } from './geometry-math'
 import { execute, type OpNode } from './executor'
+import { renderInWorker, shouldUseWorker } from './worker-client'
 import type { PixelData } from './pixel'
 import { pixelsToBlob, pixelsToCanvas, pixelsToDataURL, pixelsToImageData } from '../io/export'
 
@@ -59,12 +60,22 @@ export class TinctImage {
   /**
    * @internal
    * Render the pipeline to raw pixels, emitting progress along the way.
-   * Public output methods and tests build on this.
+   * Heavy, worker-safe pipelines render off the main thread; anything else
+   * (or any worker failure) renders locally. Public output methods and
+   * tests build on this.
    */
-  _render(): Promise<PixelData> {
-    return execute(this.#source, this.#ops, (pct, op) => {
+  async _render(): Promise<PixelData> {
+    const emit = (pct: number, op: string): void => {
       for (const listener of this.#listeners.progress) listener({ pct, op })
-    })
+    }
+    if (shouldUseWorker(this.#ops, this.#source)) {
+      try {
+        return await renderInWorker(this.#source, this.#ops, emit)
+      } catch {
+        // Graceful fallback: render on the main thread instead.
+      }
+    }
+    return execute(this.#source, this.#ops, emit)
   }
 
   #derive(op: OpNode): TinctImage {
