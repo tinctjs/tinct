@@ -114,6 +114,13 @@ serialized histories replay exactly. It is an honest heuristic, not ML:
 great for portraits and avatars; unusual lighting or stylized art falls back
 to salient-region framing.
 
+One consequence: the face stage reads skin **color**, so on grayscale images
+it degrades to salient-subject framing (measured on our eval set: focal
+accuracy 9/10 color → 3/10 grayscale, though every produced crop still
+contained a face). If your chain desaturates, crop with `'face'` _before_
+applying `grayscale()` — the crop sees the pixels at its position in the
+pipeline.
+
 ## Tree-shaking
 
 Every filter is individually importable. If you only use `crop` and `resize`,

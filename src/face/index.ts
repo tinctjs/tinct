@@ -12,6 +12,15 @@
  * no model downloads): identical input pixels give identical crops in every
  * browser and in workers, so serialized histories replay exactly.
  *
+ * **Color matters.** The face stage reads skin chroma, so on grayscale
+ * images it cannot fire and detection degrades to salient-subject framing
+ * (which still centers on the high-detail region — usually the person, but
+ * with no face-specific signal). Heavily color-graded images sit in
+ * between. Measured on the labeled eval set (`scripts/face-eval`): focal
+ * accuracy 9/10 color, 6/10 sepia, 3/10 grayscale — while the produced
+ * 1:1 and 9:16 crops contained a face in every case, in all three variants.
+ * Apply `'face'` crops before desaturating filters in your chain.
+ *
  * @packageDocumentation
  */
 
