@@ -9,7 +9,7 @@ concurrency: release-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
+  id-token: write # OIDC: lets npm verify this workflow's identity
 
 jobs:
   release:
@@ -20,15 +20,17 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          registry-url: https://registry.npmjs.org
+      # Publishing uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret
+      # anywhere. The trusted publisher is configured on the npm package
+      # settings: org tinctjs, repo tinct, workflow release.yml. Requires
+      # npm >= 11.5.1 for the OIDC token exchange; provenance is automatic.
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run build
       # Opens/updates a "Version Packages" PR while changesets accumulate;
-      # publishes to npm (with provenance) when that PR is merged.
+      # publishes to npm when that PR is merged.
       - uses: changesets/action@v1
         with:
           publish: npx changeset publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
