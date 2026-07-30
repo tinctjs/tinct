@@ -152,6 +152,26 @@ Listener sets are shared across an editor and everything derived from it, so
 `image.on('progress', …)` observes renders of any downstream chain. Progress
 is reported per-op with sub-op granularity for chunked CPU work.
 
+## Content-aware gravity
+
+`gravity: 'face'` reuses the registry pattern: `tinctjs/face` registers a
+_gravity resolver_ — `(pixels, cropWidth, cropHeight) → top-left origin` —
+via an explicit `enableFaceGravity()` call (a bare side-effect import would
+be tree-shaken away). Rules that keep it coherent with the rest of the
+design:
+
+- **Size is never content-dependent.** Gravity only places the window, so
+  `image.width`/`.height` stay exact, synchronous arithmetic.
+- **Deterministic by contract.** Resolvers must be pure functions of their
+  inputs. The face detector is skin-region analysis (YCbCr chroma box over
+  an integral image) with an energy-centroid saliency fallback — no platform
+  APIs, no models — so histories containing `'face'` replay identically on
+  every device, and the detector is unit-tested in Node.
+- **Same failure mode as filters:** rendering `'face'` without enabling it
+  throws the "import it so it ships" error. The worker enables it
+  internally, but offloading requires it registered on the main thread too,
+  so big and small images agree on whether a pipeline is valid.
+
 ## Extension model
 
 `defineFilter` is the single extension point:

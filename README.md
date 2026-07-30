@@ -77,7 +77,7 @@ image.on('progress', ({ pct }) => {
 | ------------------------------ | ---------------------------------------------------------------------------------- |
 | `tinct.load(source, options?)` | Load a `File`, `Blob`, URL, `ImageData`, `<img>`, `<canvas>`, or `OffscreenCanvas` |
 | `tinct.capabilities()`         | Feature detection: `{ webgl2, offscreenCanvas, workers }`                          |
-| `.crop(options)`               | Pixel/percent region, or aspect ratio + gravity                                    |
+| `.crop(options)`               | Pixel/percent region, or aspect ratio + gravity (incl. content-aware `'face'`)     |
 | `.resize(options)`             | High-quality resampling (Lanczos multi-step downscale)                             |
 | `.rotate(angle, options?)`     | 90° increments lossless; arbitrary angles expand the canvas                        |
 | `.flip(axis)`                  | `'horizontal'` or `'vertical'`                                                     |
@@ -93,6 +93,26 @@ image.on('progress', ({ pct }) => {
 
 Built-in filters (`tinctjs/filters`): `grayscale`, `sepia`, `invert`, `blur`,
 `sharpen`, `pixelate`, `vignette`, `duotone`, `noise`, `posterize`.
+
+### Face-aware cropping
+
+```ts
+import { enableFaceGravity } from 'tinctjs/face'
+
+enableFaceGravity() // once at startup; ships ~1 kB, tree-shaken if unused
+
+const avatar = await image
+  .crop({ aspect: '1:1', gravity: 'face' })
+  .resize({ width: 256 })
+  .toBlob({ format: 'webp' })
+```
+
+Detection is **deterministic and platform-agnostic** — a skin-region
+heuristic with a saliency fallback, no `FaceDetector` API and no model
+downloads — so the same input produces the same crop in every browser and
+serialized histories replay exactly. It is an honest heuristic, not ML:
+great for portraits and avatars; unusual lighting or stylized art falls back
+to salient-region framing.
 
 ## Tree-shaking
 

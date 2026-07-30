@@ -15,6 +15,9 @@ import {
   noise,
   posterize,
 } from 'tinctjs/filters'
+import { enableFaceGravity } from 'tinctjs/face'
+
+enableFaceGravity()
 
 /* ---------------------------------- state --------------------------------- */
 
@@ -232,6 +235,7 @@ function buildPanels(): void {
           'Gravity',
           [
             'center',
+            'face',
             'north',
             'south',
             'east',
