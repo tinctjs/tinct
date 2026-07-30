@@ -17,6 +17,16 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/explicit-module-boundary-types': 'error',
+      // Filter option shapes are type aliases on purpose: interfaces lack
+      // implicit index signatures and would not satisfy `Record<string, unknown>`.
+      '@typescript-eslint/consistent-type-definitions': 'off',
+    },
+  },
+  {
+    files: ['tests/**'],
+    rules: {
+      // expectTypeOf(image.crop) inspects method types without binding them.
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
   {
