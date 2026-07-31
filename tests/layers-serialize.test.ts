@@ -159,6 +159,20 @@ describe('version boundaries', () => {
     expect(() => image().pipe(json as unknown as SerializedHistory)).toThrow(/version 2/)
   })
 
+  test('a truncated source rejects descriptively instead of mis-rendering', () => {
+    // Regression (Copilot review on #9): a data64 shorter than
+    // width×height×4 used to flow into rendering as silent garbage pixels.
+    const json = document({ width: 4, height: 4 }).add(layer(image())).toJSON()
+    const [id, source] = Object.entries(json.sources)[0]!
+    const broken = {
+      ...json,
+      sources: { [id]: { ...source, data64: btoa('\x01\x02\x03\x04') } },
+    }
+    expect(() => fromJSON(broken)).toThrow(
+      new RegExp(`source '${id}' has 4 byte\\(s\\).*corrupt or truncated`),
+    )
+  })
+
   test('a layer pointing at a missing source is rejected', () => {
     const json = document({ width: 4, height: 4 }).add(layer(image())).toJSON()
     const broken = { ...json, sources: {} }

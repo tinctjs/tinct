@@ -4,7 +4,7 @@
  * @packageDocumentation
  */
 
-import { base64ToBytes } from '../core/base64'
+import { decodePixels } from '../core/base64'
 import { TinctImage } from '../core/editor'
 import type { PixelData } from '../core/pixel'
 import type { RenderOptions, TinctEventMap, Unsubscribe } from '../core/types'
@@ -337,11 +337,9 @@ export function fromJSON(data: SerializedDocument): TinctDocument {
   for (const [id, source] of Object.entries(data.sources)) {
     decoded.set(
       id,
-      TinctImage._create({
-        width: source.width,
-        height: source.height,
-        data: base64ToBytes(source.data64),
-      }),
+      TinctImage._create(
+        decodePixels(source.width, source.height, source.data64, `source '${id}'`),
+      ),
     )
   }
 

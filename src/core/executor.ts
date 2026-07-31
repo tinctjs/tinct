@@ -24,7 +24,7 @@ import {
   resolveResize,
   rotateBounds,
 } from './geometry-math'
-import { base64ToBytes } from './base64'
+import { decodePixels } from './base64'
 import { cropPixels, flipPixels, rotate90, rotateArbitrary } from '../cpu/geometry'
 import { compositeOver } from '../cpu/composite'
 import { resample } from '../cpu/resample'
@@ -76,6 +76,10 @@ export async function execute(
   signal?: AbortSignal,
   onMaterialize?: MaterializeFn,
 ): Promise<PixelData> {
+  // Checked before any work so a pre-aborted signal rejects even when the
+  // op list is empty (no edits, or a full render-cache hit) — cancellation
+  // must not depend on cache warmth.
+  if (signal?.aborted) throw abortError(signal)
   const backend = getGpuBackend()
   let current = clonePixelData(source)
   let queued: QueuedPass[] = []
@@ -205,11 +209,7 @@ function runCpuOp(pixels: PixelData, node: OpNode): PixelData {
       if (!anchor) {
         throw new Error(`tinct: overlay gravity must be a compass position (got '${gravity}')`)
       }
-      const over: PixelData = {
-        width: source.width,
-        height: source.height,
-        data: base64ToBytes(source.data64),
-      }
+      const over = decodePixels(source.width, source.height, source.data64, 'overlay source')
       // Margin pushes inward from anchored edges; centered axes ignore it.
       const x =
         Math.round((pixels.width - over.width) * anchor.x) +
