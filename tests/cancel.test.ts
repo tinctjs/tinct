@@ -48,6 +48,16 @@ describe('cancellation', () => {
     expect(ran).toEqual(['first'])
   })
 
+  test('a pre-aborted signal rejects even when the whole chain is cache-warm', async () => {
+    // Regression: a full render-cache hit produces an empty op list, which
+    // used to skip the abort check entirely and resolve with stale pixels.
+    const image = TinctImage._create(gradientH(8, 8)).apply(invert())
+    await image._render() // warm the full-chain cache
+    const controller = new AbortController()
+    controller.abort()
+    await expect(image._render(controller.signal)).rejects.toMatchObject({ name: 'AbortError' })
+  })
+
   test('a custom abort reason propagates', async () => {
     const image = TinctImage._create(solid(4, 4, [1, 2, 3, 255])).apply(invert())
     const controller = new AbortController()

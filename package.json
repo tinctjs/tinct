@@ -53,6 +53,10 @@
       "types": "./dist/hash/index.d.ts",
       "import": "./dist/hash/index.js"
     },
+    "./layers": {
+      "types": "./dist/layers/index.d.ts",
+      "import": "./dist/layers/index.js"
+    },
     "./package.json": "./package.json",
     "./palette": {
       "types": "./dist/palette/index.d.ts",

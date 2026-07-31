@@ -31,13 +31,23 @@ import { bytesToBase64 } from './base64'
 import { execute, type OpNode } from './executor'
 import { RenderCache } from './render-cache'
 import { renderInWorker, shouldUseWorker } from './worker-client'
-import type { PixelData } from './pixel'
+import type { DeferredSource, PipelineSource, PixelData } from './pixel'
+import { isDeferred } from './pixel'
 import { pixelsToBlob, pixelsToCanvas, pixelsToDataURL, pixelsToImageData } from '../io/export'
 
 /** @internal Listener channel shared by an editor and everything derived from it. */
 type Listeners = {
   [K in keyof TinctEventMap]: Set<(data: TinctEventMap[K]) => void>
 }
+
+/**
+ * @internal
+ * Memoized pixels per deferred source. Keyed by the descriptor rather than
+ * the editor so every image derived from one deferred source resolves it
+ * once, mirroring how a decoded source is shared down a chain. A rejected
+ * resolve (an abort, typically) is evicted so a later render can retry.
+ */
+const deferredPixels = new WeakMap<DeferredSource, Promise<PixelData>>()
 
 /**
  * An immutable image-editing pipeline.
@@ -52,14 +62,14 @@ type Listeners = {
  * of the public API.
  */
 export class TinctImage {
-  readonly #source: PixelData
+  readonly #source: PipelineSource
   readonly #ops: readonly OpNode[]
   readonly #listeners: Listeners
   readonly #cache: RenderCache
 
   /** @internal Use {@link tinct.load}. */
   private constructor(
-    source: PixelData,
+    source: PipelineSource,
     ops: readonly OpNode[],
     listeners: Listeners,
     cache: RenderCache,
@@ -70,9 +80,23 @@ export class TinctImage {
     this.#cache = cache
   }
 
-  /** @internal Entry point used by `tinct.load` and tests. */
-  static _create(source: PixelData, cache = new RenderCache()): TinctImage {
+  /**
+   * @internal Entry point used by `tinct.load` and tests.
+   *
+   * `source` is either decoded pixels or a {@link DeferredSource} whose
+   * dimensions are known up front and whose pixels are produced on first
+   * render (see `tinctjs/layers`, whose `flatten()` builds one).
+   */
+  static _create(source: PipelineSource, cache = new RenderCache()): TinctImage {
     return new TinctImage(source, [], { progress: new Set() }, cache)
+  }
+
+  /**
+   * @internal The source behind this pipeline, for serializers that need the
+   * original pixels. Deferred sources are returned unresolved.
+   */
+  get _source(): PipelineSource {
+    return this.#source
   }
 
   /**
@@ -91,7 +115,7 @@ export class TinctImage {
     // Start from the longest already-rendered prefix.
     const keys = RenderCache.prefixKeys(this.#ops)
     let start = 0
-    let source = this.#source
+    let source = await this.#pixels(signal)
     for (let i = this.#ops.length - 1; i >= 0; i--) {
       const hit = this.#cache.get(keys[i]!)
       if (hit) {
@@ -123,6 +147,23 @@ export class TinctImage {
     return execute(source, ops, emit, signal, (index, pixels) => {
       this.#cache.set(keys[start + index]!, pixels)
     })
+  }
+
+  /**
+   * @internal The pipeline's starting pixels. Decoded sources are returned
+   * as-is; deferred sources resolve once and are shared from then on.
+   */
+  async #pixels(signal?: AbortSignal): Promise<PixelData> {
+    const source = this.#source
+    if (!isDeferred(source)) return source
+    let pending = deferredPixels.get(source)
+    if (!pending) {
+      pending = source.resolve(signal)
+      deferredPixels.set(source, pending)
+      // An abort must not poison the descriptor for later renders.
+      pending.catch(() => deferredPixels.delete(source))
+    }
+    return pending
   }
 
   #derive(op: OpNode): TinctImage {

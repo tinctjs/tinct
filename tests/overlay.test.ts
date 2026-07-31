@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from 'vitest'
 import { TinctImage } from '../src/core/editor'
-import type { SerializedHistory } from '../src/core/types'
+import type { SerializedHistory, SerializedOp } from '../src/core/types'
 import { px, solid, expectRgbaClose } from './helpers'
 
 const logo = (w = 4, h = 4, rgba: [number, number, number, number] = [255, 0, 0, 255]) =>
@@ -80,6 +80,21 @@ describe('serialization', () => {
     const ops = JSON.parse(JSON.stringify(edited.history())) as SerializedHistory
     const replayed = TinctImage._create(solid(12, 12, [0, 80, 160, 255])).pipe(ops)
     expect((await replayed._render()).data).toEqual((await edited._render()).data)
+  })
+
+  test('truncated overlay pixels reject descriptively instead of mis-rendering', async () => {
+    const ops: SerializedOp[] = [
+      {
+        op: 'overlay',
+        // Declares 4×4 (needs 64 bytes) but carries 4 bytes of pixel data.
+        params: { source: { width: 4, height: 4, data64: btoa('\x01\x02\x03\x04') } },
+      },
+    ]
+    await expect(
+      TinctImage._create(solid(8, 8, [0, 0, 0, 255]))
+        .pipe(ops)
+        ._render(),
+    ).rejects.toThrow(/overlay source has 4 byte\(s\), expected 64.*corrupt or truncated/)
   })
 
   test('the overlay source is copied, not referenced', async () => {

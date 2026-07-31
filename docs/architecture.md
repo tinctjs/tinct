@@ -178,6 +178,54 @@ design:
   internally, but offloading requires it registered on the main thread too,
   so big and small images agree on whether a pipeline is valid.
 
+## Layers (`layers/`)
+
+A `TinctDocument` is a fixed canvas, a background color, and an ordered list
+of `TinctLayer`s. A layer is a whole `TinctImage` plus placement, opacity,
+blend mode, visibility, and an optional name — so every filter, adjustment,
+and geometry op works per layer with no new code. Placement is translate-only
+in P1; scale and rotate are already pipeline ops on the layer's source.
+
+Documents follow the same rules as editors: immutable, structurally shared,
+mutations return new instances. Undo/redo is keeping references.
+
+**Deferred sources.** `document.flatten()` returns a `TinctImage`
+_synchronously_, even though compositing is async, because a pipeline's
+source may be a `DeferredSource` — `{ width, height, resolve(signal) }`.
+Dimensions are known up front, so `image.width` stays synchronous
+arithmetic; the pixels are produced on first render and memoized per
+descriptor. Core does not know what produces them, which is how a document
+reuses the entire output surface (`toBlob`, chaining, progress, abort) for
+free without core learning that layers exist.
+
+**Dirty-layer rendering.** Each document carries a
+`WeakMap<TinctImage, PixelData>` shared by reference with every document
+derived from it. Keying on pipeline identity makes the cache exactly as
+precise as the immutable model: a move, reorder, opacity, blend, or
+visibility change preserves the layer's `TinctImage`, so it hits and only
+the composite loop repeats; editing a layer's pipeline produces a new object,
+so only that layer re-renders — and its own `RenderCache` still resumes from
+the longest unchanged prefix.
+
+**Compositing.** A per-pixel CPU loop per layer. Blend modes are the
+separable functions from W3C Compositing and Blending Level 1, folded into
+the existing `compositeOver` kernel: `source-over` passes no blend function
+and takes the identical code path the `overlay` op has always used, so that
+output is byte-for-byte unchanged. GPU compositing is a later phase, and will
+be parity-tested against this loop like everything else.
+
+**Serialization** uses the same envelope scheme at `version: 2`, so `pipe()`
+(a v1 reader) rejects a document cleanly. Layers reference content through a
+shared `sources` table instead of inlining it per layer, deduplicated by
+identity of the decoded pixels behind each pipeline — no hashing, and exact
+for the case that matters: one loaded image used by many layers. Sources
+inline base64 like `overlay` does, so a saved document replays without a
+fetch; external references are a slot the format leaves open.
+
+Boundaries: `layers/` may depend on `core/` and `cpu/`; nothing in `core/`
+may know layers exist, and importing nothing from `tinctjs/layers` costs no
+bytes.
+
 ## Extension model
 
 `defineFilter` is the single extension point:

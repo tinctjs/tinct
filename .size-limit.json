@@ -39,5 +39,17 @@
     "path": "dist/palette/index.js",
     "import": "{ palette }",
     "limit": "2 kB"
+  },
+  {
+    "name": "layers baseline: core TinctImage",
+    "path": "dist/index.js",
+    "import": "{ TinctImage }",
+    "limit": "9 kB"
+  },
+  {
+    "name": "layers: document + layer (baseline + 4 kB of its own code)",
+    "path": "dist/layers/index.js",
+    "import": "{ document, layer, fromJSON }",
+    "limit": "13 kB"
   }
 ]
