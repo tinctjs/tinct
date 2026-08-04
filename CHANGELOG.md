@@ -1,5 +1,11 @@
 # imagepipe
 
+## 0.3.0
+
+### Minor Changes
+
+- 0e0772b: Rename: the package formerly published as `tinctjs` is now `imagepipe`. The entry object is `imagepipe` (was `tinct`), the pipeline class is `ImagePipe` (was `TinctImage`), layer types are `PipeDocument`/`PipeLayer`, and subpath entries keep their names (`imagepipe/filters`, `/face`, `/hash`, `/palette`, `/layers`). No behavioral changes; serialized histories and documents from tinctjs replay unchanged.
+
 > Versions up to 0.2.0 were published as `tinctjs`; the package was renamed
 > to `imagepipe` in 0.3.0. History below is continuous.
 
