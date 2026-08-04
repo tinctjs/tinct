@@ -1,5 +1,5 @@
 {
-  "name": "tinctjs",
+  "name": "imagepipe",
   "version": "0.2.0",
   "description": "Zero-dependency, TypeScript-first, in-browser image editing. Small, composable, tree-shakeable.",
   "type": "module",
@@ -12,11 +12,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tinctjs/tinct.git"
+    "url": "git+https://github.com/imagepipe/imagepipe.git"
   },
-  "homepage": "https://tinctjs.github.io/tinct/",
+  "homepage": "https://imagepipe.github.io/imagepipe/",
   "bugs": {
-    "url": "https://github.com/tinctjs/tinct/issues"
+    "url": "https://github.com/imagepipe/imagepipe/issues"
   },
   "keywords": [
     "image",

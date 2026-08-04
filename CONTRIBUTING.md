@@ -1,13 +1,13 @@
-# Contributing to Tinct
+# Contributing to imagepipe
 
-Thanks for helping! Tinct aims to stay small, zero-dependency, and pleasant to
+Thanks for helping! imagepipe aims to stay small, zero-dependency, and pleasant to
 read — contributions should too.
 
 ## Setup
 
 ```sh
-git clone https://github.com/tinctjs/tinct.git
-cd tinct
+git clone https://github.com/imagepipe/imagepipe.git
+cd imagepipe
 npm ci
 ```
 

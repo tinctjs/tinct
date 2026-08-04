@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
-  <!-- Tinct — "The Dip": an image swatch half-submerged in dye (tinctus = dipped). -->
+  <!-- imagepipe — "The Dip": an image swatch half-submerged in dye — a keepsake from the library's first name, tinct. -->
   <defs>
     <linearGradient id="dye" x1="0" y1="1" x2="0" y2="0">
       <stop offset="0" stop-color="#4f46e5"/>

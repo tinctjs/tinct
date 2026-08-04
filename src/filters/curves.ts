@@ -83,7 +83,7 @@ function buildLut(points: CurvePoint[] | undefined): Uint8ClampedArray | null {
 /**
  * Tone curves with serializable control points — the building block for
  * shareable "preset" looks: a preset is just JSON that replays through
- * {@link TinctImage.pipe}.
+ * {@link ImagePipe.pipe}.
  *
  * Runs on the CPU path in v0.2 (the shader pipeline does not carry LUT
  * textures yet).

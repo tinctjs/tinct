@@ -3,11 +3,11 @@
  * ordering, reference resolution, and synchronous bounds.
  */
 import { describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { document, layer } from '../src/layers'
 import { solid } from './helpers'
 
-const image = (w = 4, h = 4) => TinctImage._create(solid(w, h, [255, 0, 0, 255]))
+const image = (w = 4, h = 4) => ImagePipe._create(solid(w, h, [255, 0, 0, 255]))
 const doc = () => document({ width: 20, height: 10 })
 
 describe('document()', () => {

@@ -3,7 +3,7 @@
  * renders, isolation from output mutation, and LRU bounds.
  */
 import { describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { RenderCache } from '../src/core/render-cache'
 import { defineFilter } from '../src/core/filter'
 import type { FilterFactory } from '../src/core/filter'
@@ -31,7 +31,7 @@ describe('incremental re-rendering', () => {
     const c = counted('cache-c')
     const d = counted('cache-d')
 
-    const base = TinctImage._create(gradientH(16, 16))
+    const base = ImagePipe._create(gradientH(16, 16))
     await base.apply(a.factory()).apply(b.factory()).apply(c.factory())._render()
     expect([a.runs(), b.runs(), c.runs()]).toEqual([1, 1, 1])
 
@@ -43,29 +43,29 @@ describe('incremental re-rendering', () => {
 
   test('branches from one image share the cached prefix', async () => {
     const a = counted('cache-branch-a')
-    const base = TinctImage._create(gradientH(8, 8)).apply(a.factory())
+    const base = ImagePipe._create(gradientH(8, 8)).apply(a.factory())
     await base.flip('horizontal')._render()
     await base.flip('vertical')._render()
     expect(a.runs()).toBe(1)
   })
 
   test('cached renders are byte-identical to fresh renders', async () => {
-    const build = (image: TinctImage): TinctImage =>
+    const build = (image: ImagePipe): ImagePipe =>
       image
         .crop({ x: 2, y: 2, width: 12, height: 12 })
         .adjust({ brightness: 0.2 })
         .flip('horizontal')
 
-    const warm = TinctImage._create(gradientH(16, 16))
+    const warm = ImagePipe._create(gradientH(16, 16))
     await build(warm)._render() // populate cache
     const cached = await build(warm)._render() // full-chain hit
 
-    const fresh = await build(TinctImage._create(gradientH(16, 16)))._render()
+    const fresh = await build(ImagePipe._create(gradientH(16, 16)))._render()
     expectPixelsClose(cached, fresh, 0)
   })
 
   test('mutating a returned render cannot poison the cache', async () => {
-    const image = TinctImage._create(solid(8, 8, [100, 100, 100, 255])).adjust({ brightness: 0.1 })
+    const image = ImagePipe._create(solid(8, 8, [100, 100, 100, 255])).adjust({ brightness: 0.1 })
     const first = await image._render()
     first.data.fill(0)
     const second = await image._render()
@@ -73,7 +73,7 @@ describe('incremental re-rendering', () => {
   })
 
   test('a changed prefix invalidates naturally (different key, no stale hit)', async () => {
-    const base = TinctImage._create(gradientH(8, 8))
+    const base = ImagePipe._create(gradientH(8, 8))
     const bright = await base.adjust({ brightness: 0.5 }).flip('horizontal')._render()
     const dark = await base.adjust({ brightness: -0.5 }).flip('horizontal')._render()
     expect(bright.data).not.toEqual(dark.data)

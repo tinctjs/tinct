@@ -88,7 +88,7 @@ export function resolveCrop(
   if ('aspect' in options) {
     const aspect = resolveAspect(options.aspect)
     if (!Number.isFinite(aspect) || aspect <= 0) {
-      throw new Error(`tinct: invalid crop aspect ${JSON.stringify(options.aspect)}`)
+      throw new Error(`imagepipe: invalid crop aspect ${JSON.stringify(options.aspect)}`)
     }
     if (width / height > aspect) {
       h = height
@@ -111,7 +111,7 @@ export function resolveCrop(
       const resolver = gravityRegistry.get(gravity)
       if (!resolver) {
         throw new Error(
-          `tinct: gravity '${gravity}' is not registered — for 'face', import and call enableFaceGravity() from 'tinctjs/face' so the detector is included in your bundle`,
+          `imagepipe: gravity '${gravity}' is not registered — for 'face', import and call enableFaceGravity() from 'imagepipe/face' so the detector is included in your bundle`,
         )
       }
       const origin = resolver(pixels, Math.round(w), Math.round(h))
@@ -180,7 +180,7 @@ export function resolveResize(options: ResizeOptions, width: number, height: num
     const out = { width: Math.max(1, Math.round((width / height) * th)), height: th }
     return { scaled: out, out }
   }
-  throw new Error('tinct: resize requires at least one of width or height')
+  throw new Error('imagepipe: resize requires at least one of width or height')
 }
 
 /** @internal Bounding box of a rectangle rotated by `angle` degrees. */

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
-  <!-- Tinct mark for dark backgrounds: light swatch, same dye. -->
+  <!-- imagepipe mark for dark backgrounds: light swatch, same dye. -->
   <defs>
     <linearGradient id="dye" x1="0" y1="1" x2="0" y2="0">
       <stop offset="0" stop-color="#6366f1"/>

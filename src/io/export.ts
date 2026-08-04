@@ -12,7 +12,7 @@ import { createCanvas, createElementCanvas, get2d, type AnyCanvas } from './env'
 /** @internal PixelData → real ImageData (copies, so renders stay immutable). */
 export function pixelsToImageData(pixels: PixelData): ImageData {
   if (typeof ImageData === 'undefined') {
-    throw new Error('tinct: ImageData is not available in this environment')
+    throw new Error('imagepipe: ImageData is not available in this environment')
   }
   return new ImageData(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height)
 }
@@ -66,7 +66,7 @@ async function encodeToTarget(
   const format = options.format ?? 'png'
   if (format === 'png') {
     throw new Error(
-      'tinct: maxBytes needs a quality axis — png has none; use jpeg or webp, or resize the image down',
+      'imagepipe: maxBytes needs a quality axis — png has none; use jpeg or webp, or resize the image down',
     )
   }
   const type = mimeType(options)
@@ -79,7 +79,7 @@ async function encodeToTarget(
   let best = await canvasToBlob(canvas, type, lo)
   if (best.size > maxBytes) {
     throw new Error(
-      `tinct: cannot encode under ${String(maxBytes)} bytes — the smallest ${format} at quality ${String(
+      `imagepipe: cannot encode under ${String(maxBytes)} bytes — the smallest ${format} at quality ${String(
         MIN_QUALITY,
       )} is ${String(best.size)} bytes; resize the image down first`,
     )
@@ -129,7 +129,7 @@ function canvasToBlob(canvas: AnyCanvas, type: string, quality?: number): Promis
     canvas.toBlob(
       (blob) => {
         if (blob) resolve(blob)
-        else reject(new Error(`tinct: encoding to ${type} failed`))
+        else reject(new Error(`imagepipe: encoding to ${type} failed`))
       },
       type,
       quality,
@@ -145,7 +145,7 @@ function blobToDataURL(blob: Blob): Promise<string> {
         resolve(reader.result as string)
       }
       reader.onerror = () => {
-        reject(new Error('tinct: could not read encoded blob'))
+        reject(new Error('imagepipe: could not read encoded blob'))
       }
       reader.readAsDataURL(blob)
     })

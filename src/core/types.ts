@@ -1,5 +1,5 @@
 /**
- * Public types shared across the Tinct API.
+ * Public types shared across the imagepipe API.
  *
  * @packageDocumentation
  */
@@ -26,7 +26,7 @@ export type PixelValue = number | Percent
  * `'face'` is content-aware: the crop window is placed over the most likely
  * face (deterministic skin-region heuristic with a saliency fallback — no
  * platform APIs, identical results in every browser). It requires calling
- * `enableFaceGravity()` from `tinctjs/face` so the detector ships in your
+ * `enableFaceGravity()` from `imagepipe/face` so the detector ships in your
  * bundle; rendering without it throws a descriptive error.
  */
 export type Gravity =
@@ -83,7 +83,7 @@ export interface CropAspectOptions {
   gravity?: Gravity
 }
 
-/** Options accepted by {@link TinctImage.crop}. */
+/** Options accepted by {@link ImagePipe.crop}. */
 export type CropOptions = CropRegionOptions | CropAspectOptions
 
 /** How the image is fitted when both `width` and `height` are given to `resize`. */
@@ -121,13 +121,13 @@ export interface ResizeBaseOptions {
 }
 
 /**
- * Options accepted by {@link TinctImage.resize}. At least one of `width` or
+ * Options accepted by {@link ImagePipe.resize}. At least one of `width` or
  * `height` is required; a missing dimension is derived from the aspect ratio.
  */
 export type ResizeOptions = ResizeBaseOptions &
   ({ width: number; height?: number } | { width?: number; height: number })
 
-/** Options accepted by {@link TinctImage.rotate}. */
+/** Options accepted by {@link ImagePipe.rotate}. */
 export interface RotateOptions {
   /**
    * CSS color used for the regions uncovered by a non-90°-multiple rotation
@@ -146,7 +146,7 @@ export interface RotateOptions {
   trim?: boolean
 }
 
-/** Axis for {@link TinctImage.flip}. */
+/** Axis for {@link ImagePipe.flip}. */
 export type FlipAxis = 'horizontal' | 'vertical'
 
 /**
@@ -188,7 +188,7 @@ export interface AdjustOptions {
 }
 
 /**
- * Options accepted by {@link TinctImage.overlay}.
+ * Options accepted by {@link ImagePipe.overlay}.
  *
  * Placement uses the compass gravities only (`'face'` is for cropping);
  * `margin` insets the overlay from the edges it is anchored to.
@@ -226,7 +226,7 @@ export interface RenderOptions {
   signal?: AbortSignal
 }
 
-/** Options accepted by {@link TinctImage.toBlob} and {@link TinctImage.toDataURL}. */
+/** Options accepted by {@link ImagePipe.toBlob} and {@link ImagePipe.toDataURL}. */
 export interface ExportOptions extends RenderOptions {
   /**
    * Output format.
@@ -255,11 +255,11 @@ export interface ExportOptions extends RenderOptions {
   maxBytes?: number
 }
 
-/** Sources accepted by {@link tinct.load}. */
+/** Sources accepted by {@link imagepipe.load}. */
 export type ImageSource =
   File | Blob | string | URL | ImageData | HTMLImageElement | HTMLCanvasElement | OffscreenCanvas
 
-/** Options accepted by {@link tinct.load}. */
+/** Options accepted by {@link imagepipe.load}. */
 export interface LoadOptions {
   /**
    * CORS mode used when `source` is a URL.
@@ -278,13 +278,13 @@ export interface ProgressEventData {
   op?: string
 }
 
-/** Map of event names to their payloads. See {@link TinctImage.on}. */
-export interface TinctEventMap {
+/** Map of event names to their payloads. See {@link ImagePipe.on}. */
+export interface ImagePipeEventMap {
   /** Emitted while a render is executing an expensive pipeline. */
   progress: ProgressEventData
 }
 
-/** Removes a listener registered with {@link TinctImage.on}. */
+/** Removes a listener registered with {@link ImagePipe.on}. */
 export type Unsubscribe = () => void
 
 /**
@@ -313,7 +313,7 @@ export type SerializedOp =
 
 /**
  * A serialized pipeline: a format version plus the op list. Produced by
- * {@link TinctImage.history}; accepted by {@link TinctImage.pipe} (which
+ * {@link ImagePipe.history}; accepted by {@link ImagePipe.pipe} (which
  * also accepts a bare `SerializedOp[]` for histories saved before the
  * envelope existed). The version lets stored histories outlive format
  * changes: readers reject versions they do not understand instead of
@@ -327,7 +327,7 @@ export interface SerializedHistory {
 
 /**
  * Runtime capabilities detected in the current environment.
- * See {@link tinct.capabilities}.
+ * See {@link imagepipe.capabilities}.
  */
 export interface Capabilities {
   /** WebGL2 is available; filters and adjustments can run on the GPU. */

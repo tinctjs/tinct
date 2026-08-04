@@ -63,7 +63,7 @@ export function parseColor(input: string): Rgba {
   }
 
   throw new Error(
-    `tinct: cannot parse color '${input}' — use #rgb[a], #rrggbb[aa], rgb()/rgba(), 'transparent', or a basic named color`,
+    `imagepipe: cannot parse color '${input}' — use #rgb[a], #rrggbb[aa], rgb()/rgba(), 'transparent', or a basic named color`,
   )
 }
 

@@ -44,7 +44,7 @@ export function decodePixels(
   const expected = width * height * 4
   if (data.length !== expected) {
     throw new Error(
-      `tinct: ${label} has ${String(data.length)} byte(s), expected ${String(expected)} for ` +
+      `imagepipe: ${label} has ${String(data.length)} byte(s), expected ${String(expected)} for ` +
         `${String(width)}x${String(height)} RGBA — the history is corrupt or truncated`,
     )
   }

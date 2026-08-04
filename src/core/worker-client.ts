@@ -96,7 +96,7 @@ function getWorker(): Worker | null {
     // Startup or runtime failure: reject everything in flight and stop
     // trying — callers fall back to main-thread rendering.
     workerBroken = true
-    for (const entry of pending.values()) entry.reject(new Error('tinct: render worker failed'))
+    for (const entry of pending.values()) entry.reject(new Error('imagepipe: render worker failed'))
     pending.clear()
     worker?.terminate()
     worker = null
@@ -112,7 +112,7 @@ export function renderInWorker(
   signal?: AbortSignal,
 ): Promise<PixelData> {
   const target = getWorker()
-  if (!target) return Promise.reject(new Error('tinct: no worker available'))
+  if (!target) return Promise.reject(new Error('imagepipe: no worker available'))
   if (signal?.aborted) return Promise.reject(toError(abortError(signal)))
 
   return new Promise<PixelData>((resolve, reject) => {

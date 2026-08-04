@@ -1,5 +1,5 @@
 /**
- * Shrinkwrap — a Tinct example.
+ * Shrinkwrap — a imagepipe example.
  *
  * Batch upload optimization, fully on-device: EXIF auto-orientation,
  * high-quality downscale, WebP under a byte budget, optional watermark
@@ -7,9 +7,9 @@
  * (exactly what an instant-loading gallery stores next to each URL).
  * A new drop aborts any batch still running.
  */
-import { tinct } from 'tinctjs'
-import { thumbHash, thumbHashBase64 } from 'tinctjs/hash'
-import { dominantColor } from 'tinctjs/palette'
+import { imagepipe } from 'imagepipe'
+import { thumbHash, thumbHashBase64 } from 'imagepipe/hash'
+import { dominantColor } from 'imagepipe/palette'
 // The reference decoder renders the placeholder <img> from the hash bytes —
 // in a real app this line lives in your *frontend*, not your upload path.
 import { thumbHashToDataURL } from 'thumbhash'
@@ -22,7 +22,7 @@ const fileInput = $('file') as HTMLInputElement
 
 let batch: AbortController | null = null
 
-/** The Tinct dip mark, drawn locally, used as the demo watermark. */
+/** The imagepipe dip mark, drawn locally, used as the demo watermark. */
 function watermark(): ImageData {
   const c = document.createElement('canvas')
   c.width = c.height = 72
@@ -70,7 +70,7 @@ async function processBatch(files: File[]): Promise<void> {
     rows.append(tr)
 
     try {
-      const image = await tinct.load(file)
+      const image = await imagepipe.load(file)
       let pipeline = image.width > maxWidth ? image.resize({ width: maxWidth }) : image
       if (mark)
         pipeline = pipeline.overlay(mark, { gravity: 'south-east', margin: 14, opacity: 0.85 })

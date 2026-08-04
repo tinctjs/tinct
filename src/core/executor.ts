@@ -52,8 +52,8 @@ export function abortError(signal: AbortSignal): unknown {
   return (
     (signal.reason as unknown) ??
     (typeof DOMException !== 'undefined'
-      ? new DOMException('tinct: render aborted', 'AbortError')
-      : new Error('tinct: render aborted'))
+      ? new DOMException('imagepipe: render aborted', 'AbortError')
+      : new Error('imagepipe: render aborted'))
   )
 }
 
@@ -207,7 +207,7 @@ function runCpuOp(pixels: PixelData, node: OpNode): PixelData {
       const { source, gravity = 'south-east', margin = 0, opacity = 1 } = node.params
       const anchor = compassFactors(gravity)
       if (!anchor) {
-        throw new Error(`tinct: overlay gravity must be a compass position (got '${gravity}')`)
+        throw new Error(`imagepipe: overlay gravity must be a compass position (got '${gravity}')`)
       }
       const over = decodePixels(source.width, source.height, source.data64, 'overlay source')
       // Margin pushes inward from anchored edges; centered axes ignore it.
@@ -235,7 +235,7 @@ function resolveDefinition(node: OpNode & { op: 'filter' }): FilterDefinition {
   const definition = node.definition ?? filterRegistry.get(node.params.name)
   if (!definition) {
     throw new Error(
-      `tinct: filter '${node.params.name}' is not registered — import it from 'tinctjs/filters' (or define it with defineFilter) so its code is included in your bundle`,
+      `imagepipe: filter '${node.params.name}' is not registered — import it from 'imagepipe/filters' (or define it with defineFilter) so its code is included in your bundle`,
     )
   }
   return definition

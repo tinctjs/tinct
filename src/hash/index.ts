@@ -3,7 +3,7 @@
  * blurred previews while the real image loads.
  *
  * ```ts
- * import { thumbHash, thumbHashBase64 } from 'tinctjs/hash'
+ * import { thumbHash, thumbHashBase64 } from 'imagepipe/hash'
  *
  * const pixels = await image.toImageData()
  * const hash = thumbHashBase64(pixels) // store next to the image URL
@@ -12,7 +12,7 @@
  * Decode at display time with any ThumbHash decoder (e.g. the reference
  * `thumbhash` package's `thumbHashToDataURL`) — the format is the
  * interoperable one published at https://evanw.github.io/thumbhash/, and
- * tinct's encoder is verified byte-for-byte against the reference
+ * imagepipe's encoder is verified byte-for-byte against the reference
  * implementation. Deterministic: identical pixels produce identical hashes
  * everywhere.
  *

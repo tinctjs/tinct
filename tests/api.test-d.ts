@@ -3,31 +3,31 @@
  * chainability, option unions, and the absence of `any`.
  */
 import { describe, expectTypeOf, test } from 'vitest'
-import { tinct, defineFilter, TinctImage } from '../src/index'
+import { imagepipe, defineFilter, ImagePipe } from '../src/index'
 import type { ExportOptions, PixelData, SerializedHistory, Unsubscribe } from '../src/index'
 import { grayscale, blur, duotone, sepia } from '../src/filters/index'
 
-declare const image: TinctImage
+declare const image: ImagePipe
 
-describe('tinct.load', () => {
+describe('imagepipe.load', () => {
   test('accepts every documented source type', () => {
-    expectTypeOf(tinct.load).toBeCallableWith(new Blob())
-    expectTypeOf(tinct.load).toBeCallableWith('https://example.com/a.png')
-    expectTypeOf(tinct.load).toBeCallableWith(new URL('https://example.com/a.png'))
-    expectTypeOf(tinct.load).parameter(0).not.toBeAny()
-    expectTypeOf(tinct.load).returns.resolves.toEqualTypeOf<TinctImage>()
+    expectTypeOf(imagepipe.load).toBeCallableWith(new Blob())
+    expectTypeOf(imagepipe.load).toBeCallableWith('https://example.com/a.png')
+    expectTypeOf(imagepipe.load).toBeCallableWith(new URL('https://example.com/a.png'))
+    expectTypeOf(imagepipe.load).parameter(0).not.toBeAny()
+    expectTypeOf(imagepipe.load).returns.resolves.toEqualTypeOf<ImagePipe>()
   })
 })
 
 describe('chainable operations', () => {
-  test('every operation returns a new TinctImage', () => {
-    expectTypeOf(image.crop({ aspect: '16:9' })).toEqualTypeOf<TinctImage>()
-    expectTypeOf(image.resize({ width: 1280 })).toEqualTypeOf<TinctImage>()
-    expectTypeOf(image.rotate(90)).toEqualTypeOf<TinctImage>()
-    expectTypeOf(image.flip('horizontal')).toEqualTypeOf<TinctImage>()
-    expectTypeOf(image.adjust({ brightness: 0.1 })).toEqualTypeOf<TinctImage>()
-    expectTypeOf(image.apply(grayscale())).toEqualTypeOf<TinctImage>()
-    expectTypeOf(image.pipe([])).toEqualTypeOf<TinctImage>()
+  test('every operation returns a new ImagePipe', () => {
+    expectTypeOf(image.crop({ aspect: '16:9' })).toEqualTypeOf<ImagePipe>()
+    expectTypeOf(image.resize({ width: 1280 })).toEqualTypeOf<ImagePipe>()
+    expectTypeOf(image.rotate(90)).toEqualTypeOf<ImagePipe>()
+    expectTypeOf(image.flip('horizontal')).toEqualTypeOf<ImagePipe>()
+    expectTypeOf(image.adjust({ brightness: 0.1 })).toEqualTypeOf<ImagePipe>()
+    expectTypeOf(image.apply(grayscale())).toEqualTypeOf<ImagePipe>()
+    expectTypeOf(image.pipe([])).toEqualTypeOf<ImagePipe>()
   })
 
   test('the target chain from the README typechecks end to end', () => {

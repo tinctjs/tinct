@@ -2,7 +2,7 @@
  * Content-aware `'face'` crop gravity.
  *
  * ```ts
- * import { enableFaceGravity } from 'tinctjs/face'
+ * import { enableFaceGravity } from 'imagepipe/face'
  *
  * enableFaceGravity()
  * image.crop({ aspect: '1:1', gravity: 'face' })

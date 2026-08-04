@@ -3,7 +3,7 @@
  * errors, worker-safety, and history replay.
  */
 import { afterEach, describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { gravityRegistry } from '../src/core/gravity'
 import { resolveCrop } from '../src/core/geometry-math'
 import { shouldUseWorker } from '../src/core/worker-client'
@@ -164,7 +164,7 @@ describe("crop with gravity: 'face'", () => {
 
   test('dimension queries never need the detector', () => {
     // No enableFaceGravity() here: width/height must still be exact.
-    const image = TinctImage._create(scene(320, 240, 100, 100)).crop({
+    const image = ImagePipe._create(scene(320, 240, 100, 100)).crop({
       aspect: '1:1',
       gravity: 'face',
     })
@@ -172,19 +172,19 @@ describe("crop with gravity: 'face'", () => {
   })
 
   test('rendering without enableFaceGravity throws a descriptive error', async () => {
-    const image = TinctImage._create(scene(320, 240, 100, 100)).crop({
+    const image = ImagePipe._create(scene(320, 240, 100, 100)).crop({
       aspect: '1:1',
       gravity: 'face',
     })
-    await expect(image._render()).rejects.toThrow(/enableFaceGravity.*tinctjs\/face/)
+    await expect(image._render()).rejects.toThrow(/enableFaceGravity.*imagepipe\/face/)
   })
 
   test('histories replay identically (detection is deterministic)', async () => {
     enableFaceGravity()
     const source = scene(320, 240, 220, 100)
-    const edited = TinctImage._create(source).crop({ aspect: '1:1', gravity: 'face' })
+    const edited = ImagePipe._create(source).crop({ aspect: '1:1', gravity: 'face' })
     const ops = JSON.parse(JSON.stringify(edited.history())) as SerializedHistory
-    const replayed = TinctImage._create(source).pipe(ops)
+    const replayed = ImagePipe._create(source).pipe(ops)
     expectPixelsClose(await replayed._render(), await edited._render(), 0)
   })
 })

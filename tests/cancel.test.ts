@@ -4,14 +4,14 @@
  * worker renders.
  */
 import { describe, expect, test, vi } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { defineFilter } from '../src/core/filter'
 import { invert } from '../src/filters/index'
 import { gradientH, solid } from './helpers'
 
 describe('cancellation', () => {
   test('a pre-aborted signal rejects before any work happens', async () => {
-    const image = TinctImage._create(gradientH(8, 8)).apply(invert())
+    const image = ImagePipe._create(gradientH(8, 8)).apply(invert())
     let progressed = 0
     image.on('progress', () => progressed++)
 
@@ -34,7 +34,7 @@ describe('cancellation', () => {
       })
 
     const controller = new AbortController()
-    const image = TinctImage._create(solid(4, 4, [9, 9, 9, 255]))
+    const image = ImagePipe._create(solid(4, 4, [9, 9, 9, 255]))
       .apply(track('first')())
       .apply(track('second')())
       .apply(track('third')())
@@ -51,7 +51,7 @@ describe('cancellation', () => {
   test('a pre-aborted signal rejects even when the whole chain is cache-warm', async () => {
     // Regression: a full render-cache hit produces an empty op list, which
     // used to skip the abort check entirely and resolve with stale pixels.
-    const image = TinctImage._create(gradientH(8, 8)).apply(invert())
+    const image = ImagePipe._create(gradientH(8, 8)).apply(invert())
     await image._render() // warm the full-chain cache
     const controller = new AbortController()
     controller.abort()
@@ -59,7 +59,7 @@ describe('cancellation', () => {
   })
 
   test('a custom abort reason propagates', async () => {
-    const image = TinctImage._create(solid(4, 4, [1, 2, 3, 255])).apply(invert())
+    const image = ImagePipe._create(solid(4, 4, [1, 2, 3, 255])).apply(invert())
     const controller = new AbortController()
     controller.abort(new Error('user moved the slider'))
 
@@ -67,7 +67,7 @@ describe('cancellation', () => {
   })
 
   test('outputs accept the signal option (type + plumbing)', async () => {
-    const image = TinctImage._create(solid(2, 2, [0, 0, 0, 255]))
+    const image = ImagePipe._create(solid(2, 2, [0, 0, 0, 255]))
     const controller = new AbortController()
     controller.abort()
     // toImageData reaches the render before needing any DOM globals.
@@ -91,7 +91,7 @@ describe('cancellation', () => {
     }
     vi.stubGlobal('Worker', SilentWorker)
     try {
-      const image = TinctImage._create(gradientH(1024, 512)).flip('horizontal')
+      const image = ImagePipe._create(gradientH(1024, 512)).flip('horizontal')
       const controller = new AbortController()
       const render = image._render(controller.signal)
       controller.abort()
@@ -102,7 +102,7 @@ describe('cancellation', () => {
   })
 
   test('renders without a signal are unaffected', async () => {
-    const out = await TinctImage._create(solid(2, 2, [10, 20, 30, 255]))
+    const out = await ImagePipe._create(solid(2, 2, [10, 20, 30, 255]))
       .apply(invert())
       ._render()
     expect(out.data[0]).toBe(245)

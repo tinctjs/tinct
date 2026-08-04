@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shrinkwrap — batch upload optimizer, a Tinct example</title>
+    <title>Shrinkwrap — batch upload optimizer, a imagepipe example</title>
     <style>
       * {
         box-sizing: border-box;
@@ -129,7 +129,7 @@
       <p class="sub">
         Drop a batch of photos: each is auto-oriented, resized, compressed to a byte budget, and
         given a ThumbHash placeholder + dominant color for instant-loading UIs — all on-device with
-        <code>tinctjs</code>.
+        <code>imagepipe</code>.
       </p>
       <div class="drop" id="drop">drop images here — or click to choose (multiple ok)</div>
       <input type="file" id="file" accept="image/*" multiple />
@@ -169,7 +169,7 @@
       <p class="foot">
         The “Placeholder” column is rendered from the ~25-byte ThumbHash, not the image — that's
         what your users see while the real file loads.
-        <a href="https://github.com/tinctjs/tinct">github.com/tinctjs/tinct</a>
+        <a href="https://github.com/imagepipe/imagepipe">github.com/imagepipe/imagepipe</a>
       </p>
     </main>
     <script type="module" src="./src/main.ts"></script>

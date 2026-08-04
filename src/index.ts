@@ -1,11 +1,11 @@
 /**
- * Tinct — zero-dependency, TypeScript-first, in-browser image editing.
+ * imagepipe — zero-dependency, TypeScript-first, in-browser image editing.
  *
  * ```ts
- * import { tinct } from 'tinctjs'
- * import { grayscale, blur } from 'tinctjs/filters'
+ * import { imagepipe } from 'imagepipe'
+ * import { grayscale, blur } from 'imagepipe/filters'
  *
- * const image = await tinct.load(file)
+ * const image = await imagepipe.load(file)
  * const blob = await image
  *   .crop({ aspect: '16:9', gravity: 'center' })
  *   .resize({ width: 1280 })
@@ -16,8 +16,8 @@
  * @packageDocumentation
  */
 
-export { tinct } from './core/tinct'
-export { TinctImage } from './core/editor'
+export { imagepipe } from './core/imagepipe'
+export { ImagePipe } from './core/editor'
 export { defineFilter } from './core/filter'
 export type { Filter, FilterDefinition, FilterFactory, FilterOptions } from './core/filter'
 export type { PixelData } from './core/pixel'
@@ -48,6 +48,6 @@ export type {
   RotateOptions,
   SerializedHistory,
   SerializedOp,
-  TinctEventMap,
+  ImagePipeEventMap,
   Unsubscribe,
 } from './core/types'

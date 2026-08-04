@@ -1,4 +1,4 @@
-/** tinctjs/palette — median-cut extraction. */
+/** imagepipe/palette — median-cut extraction. */
 import { describe, expect, test } from 'vitest'
 import { palette, dominantColor } from '../src/palette/index'
 import type { PixelData } from '../src/core/pixel'

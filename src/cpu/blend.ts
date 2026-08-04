@@ -46,7 +46,7 @@ export function blendFn(mode: BlendMode): BlendFn | undefined {
   const fn = SEPARABLE[mode]
   if (!fn) {
     throw new Error(
-      `tinct: unknown blend mode '${mode}' — expected one of ${BLEND_MODES.join(', ')}`,
+      `imagepipe: unknown blend mode '${mode}' — expected one of ${BLEND_MODES.join(', ')}`,
     )
   }
   return fn

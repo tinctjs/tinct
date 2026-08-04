@@ -1,4 +1,4 @@
-// Rasterize the Tinct mark ("The Dip", assets/logo.svg) to assets/logo-512.png
+// Rasterize the imagepipe mark ("The Dip", assets/logo.svg) to assets/logo-512.png
 // for the GitHub org avatar — zero dependencies, in the spirit of the library:
 // the mark is redrawn with pixel math (4× supersampled) and encoded with a
 // minimal PNG writer over node:zlib.

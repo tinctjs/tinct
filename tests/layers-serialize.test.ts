@@ -3,7 +3,7 @@
  * round-trip fidelity, and version boundaries in both directions.
  */
 import { describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import type { SerializedHistory } from '../src/core/types'
 import { document, fromJSON, layer } from '../src/layers'
 import type { SerializedDocument } from '../src/layers'
@@ -11,7 +11,7 @@ import { gradientH, solid } from './helpers'
 
 const RED: [number, number, number, number] = [255, 0, 0, 255]
 
-const image = (w = 4, h = 4, rgba = RED) => TinctImage._create(solid(w, h, rgba))
+const image = (w = 4, h = 4, rgba = RED) => ImagePipe._create(solid(w, h, rgba))
 
 /** Force the data through real JSON, the way a consumer would store it. */
 const roundTrip = (doc: ReturnType<typeof document>): SerializedDocument =>
@@ -91,12 +91,12 @@ describe('round trips', () => {
   test('a restored document renders byte-identically', async () => {
     const doc = document({ width: 16, height: 12, background: '#102030' })
       .add(
-        layer(TinctImage._create(gradientH(8, 8)))
+        layer(ImagePipe._create(gradientH(8, 8)))
           .at(1, 1)
           .name('bg'),
       )
       .add(
-        layer(TinctImage._create(gradientH(6, 6)).flip('horizontal'))
+        layer(ImagePipe._create(gradientH(6, 6)).flip('horizontal'))
           .at(7, 4)
           .opacity(0.6)
           .blend('screen')

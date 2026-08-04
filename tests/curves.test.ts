@@ -1,6 +1,6 @@
 /** curves(): monotone spline LUTs, per-channel curves, serialization. */
 import { describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { curves, invert } from '../src/filters/index'
 import type { SerializedOp } from '../src/core/types'
 import { px, solid, gradientH } from './helpers'
@@ -8,13 +8,13 @@ import { px, solid, gradientH } from './helpers'
 describe('curves', () => {
   test('no points is a no-op', async () => {
     const src = gradientH(8, 2)
-    const out = await TinctImage._create(src).apply(curves({}))._render()
+    const out = await ImagePipe._create(src).apply(curves({}))._render()
     expect(out.data).toEqual(src.data)
   })
 
   test('identity points are a no-op', async () => {
     const src = gradientH(8, 2)
-    const out = await TinctImage._create(src)
+    const out = await ImagePipe._create(src)
       .apply(
         curves({
           rgb: [
@@ -29,7 +29,7 @@ describe('curves', () => {
 
   test('the inversion curve matches the invert filter', async () => {
     const src = gradientH(16, 4)
-    const viaCurve = await TinctImage._create(src)
+    const viaCurve = await ImagePipe._create(src)
       .apply(
         curves({
           rgb: [
@@ -39,12 +39,12 @@ describe('curves', () => {
         }),
       )
       ._render()
-    const viaInvert = await TinctImage._create(src).apply(invert())._render()
+    const viaInvert = await ImagePipe._create(src).apply(invert())._render()
     expect(viaCurve.data).toEqual(viaInvert.data)
   })
 
   test('a lifted-blacks curve raises shadows and clamps outside endpoints', async () => {
-    const out = await TinctImage._create(solid(2, 1, [10, 10, 10, 255]))
+    const out = await ImagePipe._create(solid(2, 1, [10, 10, 10, 255]))
       .apply(
         curves({
           rgb: [
@@ -59,7 +59,7 @@ describe('curves', () => {
   })
 
   test('interpolation is monotone — no overshoot between points', async () => {
-    const out = await TinctImage._create(gradientH(256, 1))
+    const out = await ImagePipe._create(gradientH(256, 1))
       .apply(
         curves({
           rgb: [
@@ -78,7 +78,7 @@ describe('curves', () => {
   })
 
   test('per-channel curves are independent, applied after the master curve', async () => {
-    const out = await TinctImage._create(solid(2, 2, [100, 100, 100, 255]))
+    const out = await ImagePipe._create(solid(2, 2, [100, 100, 100, 255]))
       .apply(
         curves({
           rgb: [
@@ -116,10 +116,10 @@ describe('curves', () => {
         },
       },
     ]
-    const direct = await TinctImage._create(gradientH(32, 8))
+    const direct = await ImagePipe._create(gradientH(32, 8))
       .pipe(JSON.parse(JSON.stringify(preset)) as SerializedOp[])
       ._render()
-    const expected = await TinctImage._create(gradientH(32, 8))
+    const expected = await ImagePipe._create(gradientH(32, 8))
       .apply(
         curves({
           rgb: [

@@ -8,9 +8,9 @@
     "noEmit": true,
     "skipLibCheck": true,
     "paths": {
-      "tinctjs": ["../src/index.ts"],
-      "tinctjs/filters": ["../src/filters/index.ts"],
-      "tinctjs/face": ["../src/face/index.ts"]
+      "imagepipe": ["../src/index.ts"],
+      "imagepipe/filters": ["../src/filters/index.ts"],
+      "imagepipe/face": ["../src/face/index.ts"]
     }
   },
   "include": ["src", "vite.config.ts"]

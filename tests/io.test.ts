@@ -5,7 +5,7 @@
  * the playground and by browser-based tests in Phase 3.
  */
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { tinct } from '../src/index'
+import { imagepipe } from '../src/index'
 import { decodeSource } from '../src/io/load'
 import { pixelsToImageData } from '../src/io/export'
 import { gradientH } from './helpers'
@@ -43,10 +43,10 @@ describe('ImageData loading', () => {
     expect(decoded.data[0]).not.toBe(99)
   })
 
-  test('tinct.load → edit → toImageData round trips', async () => {
+  test('imagepipe.load → edit → toImageData round trips', async () => {
     vi.stubGlobal('ImageData', ImageDataShim)
     const source = gradientH(4, 4)
-    const image = await tinct.load(new ImageDataShim(source.data, 4, 4) as unknown as ImageData)
+    const image = await imagepipe.load(new ImageDataShim(source.data, 4, 4) as unknown as ImageData)
 
     const out = await image.flip('horizontal').toImageData()
     expect(out).toBeInstanceOf(ImageDataShim)
@@ -77,6 +77,10 @@ describe('exporters without a browser', () => {
 
 describe('capabilities', () => {
   test('reports all-false in Node without crashing', () => {
-    expect(tinct.capabilities()).toEqual({ webgl2: false, offscreenCanvas: false, workers: false })
+    expect(imagepipe.capabilities()).toEqual({
+      webgl2: false,
+      offscreenCanvas: false,
+      workers: false,
+    })
   })
 })

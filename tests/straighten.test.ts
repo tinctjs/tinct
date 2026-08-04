@@ -3,7 +3,7 @@
  * background-free output, editor/executor agreement, serialization.
  */
 import { describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { inscribedBounds } from '../src/core/geometry-math'
 import type { SerializedHistory } from '../src/core/types'
 import { px, solid } from './helpers'
@@ -31,7 +31,7 @@ describe('inscribedBounds', () => {
 
 describe('rotate with trim', () => {
   test('the result contains no background pixels at all', async () => {
-    const image = TinctImage._create(solid(120, 90, [0, 200, 0, 255])).rotate(12, {
+    const image = ImagePipe._create(solid(120, 90, [0, 200, 0, 255])).rotate(12, {
       background: '#ff0000',
       trim: true,
     })
@@ -45,26 +45,26 @@ describe('rotate with trim', () => {
   })
 
   test('rendered dimensions match the eager dimension math', async () => {
-    const image = TinctImage._create(solid(200, 100, [10, 20, 30, 255])).rotate(10, { trim: true })
+    const image = ImagePipe._create(solid(200, 100, [10, 20, 30, 255])).rotate(10, { trim: true })
     const out = await image._render()
     expect([out.width, out.height]).toEqual([image.width, image.height])
     expect(out.width).toBeLessThan(200)
   })
 
   test('trim is a no-op for 90° multiples', async () => {
-    const plain = TinctImage._create(solid(40, 20, [5, 5, 5, 255])).rotate(90)
-    const trimmed = TinctImage._create(solid(40, 20, [5, 5, 5, 255])).rotate(90, { trim: true })
+    const plain = ImagePipe._create(solid(40, 20, [5, 5, 5, 255])).rotate(90)
+    const trimmed = ImagePipe._create(solid(40, 20, [5, 5, 5, 255])).rotate(90, { trim: true })
     expect([trimmed.width, trimmed.height]).toEqual([plain.width, plain.height])
     const out = await trimmed._render()
     expect([out.width, out.height]).toEqual([20, 40])
   })
 
   test('trim serializes and replays', async () => {
-    const image = TinctImage._create(solid(64, 64, [50, 60, 70, 255])).rotate(30, { trim: true })
+    const image = ImagePipe._create(solid(64, 64, [50, 60, 70, 255])).rotate(30, { trim: true })
     const ops = JSON.parse(JSON.stringify(image.history())) as SerializedHistory
     expect(ops.version).toBe(1)
     expect(ops.ops[0]).toEqual({ op: 'rotate', params: { angle: 30, trim: true } })
-    const replayed = TinctImage._create(solid(64, 64, [50, 60, 70, 255])).pipe(ops)
+    const replayed = ImagePipe._create(solid(64, 64, [50, 60, 70, 255])).pipe(ops)
     const [a, b] = await Promise.all([image._render(), replayed._render()])
     expect(a.data).toEqual(b.data)
   })

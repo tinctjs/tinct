@@ -8,7 +8,7 @@
  * that come back out of a browser canvas are the ones the compositor put in.
  */
 import { describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { createPixelData, type PixelData } from '../src/core/pixel'
 import { grayscale } from '../src/filters/index'
 import { document, layer } from '../src/layers'
@@ -26,7 +26,7 @@ function solid(width: number, height: number, [r, g, b, a]: Rgba): PixelData {
   return p
 }
 
-const image = (w: number, h: number, rgba: Rgba) => TinctImage._create(solid(w, h, rgba))
+const image = (w: number, h: number, rgba: Rgba) => ImagePipe._create(solid(w, h, rgba))
 
 const RED: Rgba = [255, 0, 0, 255]
 const BLUE: Rgba = [0, 0, 255, 255]
@@ -171,7 +171,7 @@ describe('documents in a real browser', () => {
 
     const doc = document({ width: 20, height: 20, background: '#ffffff' })
       .add(layer(image(20, 20, RED)).name('under'))
-      .add(layer(TinctImage._create(holed)).name('over'))
+      .add(layer(ImagePipe._create(holed)).name('over'))
 
     await doc.flatten().toCanvas() // warm the layer cache, as a UI would
 

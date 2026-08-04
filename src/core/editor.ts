@@ -1,5 +1,5 @@
 /**
- * The immutable, chainable editor at the heart of Tinct.
+ * The immutable, chainable editor at the heart of imagepipe.
  *
  * @packageDocumentation
  */
@@ -16,7 +16,7 @@ import type {
   RotateOptions,
   SerializedHistory,
   SerializedOp,
-  TinctEventMap,
+  ImagePipeEventMap,
   Unsubscribe,
 } from './types'
 import { FILTER_DEFINITION, type Filter, type FilterDefinition, type FilterOptions } from './filter'
@@ -37,7 +37,7 @@ import { pixelsToBlob, pixelsToCanvas, pixelsToDataURL, pixelsToImageData } from
 
 /** @internal Listener channel shared by an editor and everything derived from it. */
 type Listeners = {
-  [K in keyof TinctEventMap]: Set<(data: TinctEventMap[K]) => void>
+  [K in keyof ImagePipeEventMap]: Set<(data: ImagePipeEventMap[K]) => void>
 }
 
 /**
@@ -52,22 +52,22 @@ const deferredPixels = new WeakMap<DeferredSource, Promise<PixelData>>()
 /**
  * An immutable image-editing pipeline.
  *
- * Every operation returns a **new** `TinctImage`; the receiver is never
+ * Every operation returns a **new** `ImagePipe`; the receiver is never
  * mutated, so keeping references to intermediate instances gives consumers
  * undo/redo for free. Nothing is rendered until an output method
  * ({@link toBlob}, {@link toDataURL}, {@link toImageData}, {@link toCanvas})
  * is awaited.
  *
- * Instances are created with {@link tinct.load} — the constructor is not part
+ * Instances are created with {@link imagepipe.load} — the constructor is not part
  * of the public API.
  */
-export class TinctImage {
+export class ImagePipe {
   readonly #source: PipelineSource
   readonly #ops: readonly OpNode[]
   readonly #listeners: Listeners
   readonly #cache: RenderCache
 
-  /** @internal Use {@link tinct.load}. */
+  /** @internal Use {@link imagepipe.load}. */
   private constructor(
     source: PipelineSource,
     ops: readonly OpNode[],
@@ -81,14 +81,14 @@ export class TinctImage {
   }
 
   /**
-   * @internal Entry point used by `tinct.load` and tests.
+   * @internal Entry point used by `imagepipe.load` and tests.
    *
    * `source` is either decoded pixels or a {@link DeferredSource} whose
    * dimensions are known up front and whose pixels are produced on first
-   * render (see `tinctjs/layers`, whose `flatten()` builds one).
+   * render (see `imagepipe/layers`, whose `flatten()` builds one).
    */
-  static _create(source: PipelineSource, cache = new RenderCache()): TinctImage {
-    return new TinctImage(source, [], { progress: new Set() }, cache)
+  static _create(source: PipelineSource, cache = new RenderCache()): ImagePipe {
+    return new ImagePipe(source, [], { progress: new Set() }, cache)
   }
 
   /**
@@ -166,8 +166,8 @@ export class TinctImage {
     return pending
   }
 
-  #derive(op: OpNode): TinctImage {
-    return new TinctImage(this.#source, [...this.#ops, op], this.#listeners, this.#cache)
+  #derive(op: OpNode): ImagePipe {
+    return new ImagePipe(this.#source, [...this.#ops, op], this.#listeners, this.#cache)
   }
 
   /**
@@ -196,7 +196,7 @@ export class TinctImage {
    * image.crop({ x: '10%', y: '10%', width: '80%', height: '80%' })
    * ```
    */
-  crop(options: CropOptions): TinctImage {
+  crop(options: CropOptions): ImagePipe {
     return this.#derive({ op: 'crop', params: options })
   }
 
@@ -205,7 +205,7 @@ export class TinctImage {
    * Downscaling uses high-quality multi-step resampling (Lanczos by default),
    * never a naive single-pass canvas scale.
    */
-  resize(options: ResizeOptions): TinctImage {
+  resize(options: ResizeOptions): ImagePipe {
     return this.#derive({ op: 'resize', params: options })
   }
 
@@ -214,12 +214,12 @@ export class TinctImage {
    * angles expand the canvas to the rotated bounding box and fill the
    * uncovered corners with `options.background`.
    */
-  rotate(angle: number, options?: RotateOptions): TinctImage {
+  rotate(angle: number, options?: RotateOptions): ImagePipe {
     return this.#derive({ op: 'rotate', params: { angle, ...options } })
   }
 
   /** Mirror the image. `'horizontal'` flips left↔right, `'vertical'` top↔bottom. */
-  flip(axis: FlipAxis): TinctImage {
+  flip(axis: FlipAxis): ImagePipe {
     return this.#derive({ op: 'flip', params: { axis } })
   }
 
@@ -232,7 +232,7 @@ export class TinctImage {
    * image.adjust({ brightness: 0.1, contrast: 0.05, saturation: -0.2 })
    * ```
    */
-  adjust(options: AdjustOptions): TinctImage {
+  adjust(options: AdjustOptions): ImagePipe {
     return this.#derive({ op: 'adjust', params: options })
   }
 
@@ -251,7 +251,7 @@ export class TinctImage {
    *
    * @example
    * ```ts
-   * const logo = await tinct.load(logoFile)
+   * const logo = await imagepipe.load(logoFile)
    * image.overlay(await logo.resize({ width: 160 }).toImageData(), {
    *   gravity: 'south-east',
    *   margin: 16,
@@ -259,11 +259,11 @@ export class TinctImage {
    * })
    * ```
    */
-  overlay(source: PixelData, options?: OverlayOptions): TinctImage {
+  overlay(source: PixelData, options?: OverlayOptions): ImagePipe {
     const gravity = options?.gravity ?? 'south-east'
     if (!compassFactors(gravity)) {
       throw new Error(
-        `tinct: overlay gravity must be a compass position — '${gravity}' is only valid for crops`,
+        `imagepipe: overlay gravity must be a compass position — '${gravity}' is only valid for crops`,
       )
     }
     return this.#derive({
@@ -282,16 +282,16 @@ export class TinctImage {
   }
 
   /**
-   * Apply a filter — built-in (from `tinctjs/filters`) or custom (from
+   * Apply a filter — built-in (from `imagepipe/filters`) or custom (from
    * {@link defineFilter}).
    *
    * @example
    * ```ts
-   * import { grayscale, blur } from 'tinctjs/filters'
+   * import { grayscale, blur } from 'imagepipe/filters'
    * image.apply(grayscale()).apply(blur({ radius: 4 }))
    * ```
    */
-  apply<T extends FilterOptions>(filter: Filter<T>): TinctImage {
+  apply<T extends FilterOptions>(filter: Filter<T>): ImagePipe {
     return this.#derive({
       op: 'filter',
       params: { name: filter.name, options: filter.options as JsonObject },
@@ -320,13 +320,13 @@ export class TinctImage {
    * Replay a serialized history (from {@link history}) on top of this
    * image. Accepts the versioned envelope or a bare op array (histories
    * saved before the envelope existed). Unknown versions throw — they came
-   * from a newer tinct.
+   * from a newer imagepipe.
    *
    * `filter` ops are resolved by name against the filters present in your
    * bundle: importing a filter registers it. Replaying an op whose filter was
    * never imported throws a descriptive error at render time.
    */
-  pipe(history: SerializedHistory | readonly SerializedOp[]): TinctImage {
+  pipe(history: SerializedHistory | readonly SerializedOp[]): ImagePipe {
     let ops: readonly SerializedOp[]
     if (Array.isArray(history)) {
       ops = history as readonly SerializedOp[]
@@ -335,12 +335,12 @@ export class TinctImage {
       // Runtime data may carry any version despite the compile-time literal.
       if ((envelope.version as number) !== 1) {
         throw new Error(
-          `tinct: cannot replay history version ${String(envelope.version)} — it was saved by a newer version of tinct`,
+          `imagepipe: cannot replay history version ${String(envelope.version)} — it was saved by a newer version of imagepipe`,
         )
       }
       ops = envelope.ops
     }
-    return ops.reduce<TinctImage>((image, op) => image.#derive(op), this)
+    return ops.reduce<ImagePipe>((image, op) => image.#derive(op), this)
   }
 
   /**
@@ -353,9 +353,9 @@ export class TinctImage {
    * image.on('progress', ({ pct }) => console.log(`${Math.round(pct * 100)}%`))
    * ```
    */
-  on<K extends keyof TinctEventMap>(
+  on<K extends keyof ImagePipeEventMap>(
     event: K,
-    listener: (data: TinctEventMap[K]) => void,
+    listener: (data: ImagePipeEventMap[K]) => void,
   ): Unsubscribe {
     this.#listeners[event].add(listener)
     return () => this.#listeners[event].delete(listener)

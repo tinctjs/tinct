@@ -5,18 +5,18 @@
  */
 
 import { decodePixels } from '../core/base64'
-import { TinctImage } from '../core/editor'
+import { ImagePipe } from '../core/editor'
 import type { PixelData } from '../core/pixel'
-import type { RenderOptions, TinctEventMap, Unsubscribe } from '../core/types'
+import type { RenderOptions, ImagePipeEventMap, Unsubscribe } from '../core/types'
 import { parseColor } from '../cpu/color'
 import { compositeDocument, hitTest } from './composite'
-import { TinctLayer } from './layer'
+import { PipeLayer } from './layer'
 import { DOCUMENT_VERSION, serializeDocument } from './serialize'
 import type { DocumentOptions, LayerBounds, LayerRef, MoveDelta, SerializedDocument } from './types'
 
 /** @internal Listener channel shared by a document and everything derived from it. */
 type Listeners = {
-  [K in keyof TinctEventMap]: Set<(data: TinctEventMap[K]) => void>
+  [K in keyof ImagePipeEventMap]: Set<(data: ImagePipeEventMap[K]) => void>
 }
 
 /**
@@ -24,13 +24,13 @@ type Listeners = {
  * Rendered pixels per layer pipeline, shared by reference across every
  * document derived from one `document()` call.
  *
- * Keying on the layer's `TinctImage` identity is what makes dirty-layer
+ * Keying on the layer's `ImagePipe` identity is what makes dirty-layer
  * rendering exact: moving, re-blending, reordering, or hiding a layer keeps
  * the same pipeline object, so it hits; editing a layer's pipeline produces
  * a new object, so only that layer re-renders. It is weak, so pixels for
  * layers no longer referenced by any document become collectable.
  */
-export type LayerCache = WeakMap<TinctImage, PixelData>
+export type LayerCache = WeakMap<ImagePipe, PixelData>
 
 /** @internal Fixed canvas properties. */
 export interface CanvasState {
@@ -41,23 +41,23 @@ export interface CanvasState {
 
 /**
  * An immutable document: a fixed canvas, a background color, and an ordered
- * stack of {@link TinctLayer}s (index `0` is the bottom).
+ * stack of {@link PipeLayer}s (index `0` is the bottom).
  *
  * Every mutation returns a **new** document and shares structure with the
  * old one — untouched layers keep their identity — so undo/redo is keeping
- * references, exactly as it is for {@link TinctImage}.
+ * references, exactly as it is for {@link ImagePipe}.
  *
  * Instances are created with {@link document}.
  */
-export class TinctDocument {
+export class PipeDocument {
   readonly #canvas: CanvasState
-  readonly #layers: readonly TinctLayer[]
+  readonly #layers: readonly PipeLayer[]
   readonly #listeners: Listeners
   readonly #cache: LayerCache
 
   private constructor(
     canvas: CanvasState,
-    layers: readonly TinctLayer[],
+    layers: readonly PipeLayer[],
     listeners: Listeners,
     cache: LayerCache,
   ) {
@@ -68,8 +68,8 @@ export class TinctDocument {
   }
 
   /** @internal Use {@link document}. */
-  static _create(canvas: CanvasState, layers: readonly TinctLayer[] = []): TinctDocument {
-    return new TinctDocument(canvas, layers, { progress: new Set() }, new WeakMap())
+  static _create(canvas: CanvasState, layers: readonly PipeLayer[] = []): PipeDocument {
+    return new PipeDocument(canvas, layers, { progress: new Set() }, new WeakMap())
   }
 
   /** Canvas width in pixels. */
@@ -88,12 +88,12 @@ export class TinctDocument {
   }
 
   /** The layer stack, bottom to top. */
-  get layers(): readonly TinctLayer[] {
+  get layers(): readonly PipeLayer[] {
     return this.#layers.slice()
   }
 
   /** Add a layer on top of the stack. */
-  add(layer: TinctLayer): TinctDocument {
+  add(layer: PipeLayer): PipeDocument {
     return this.#withLayers([...this.#layers, layer])
   }
 
@@ -101,14 +101,14 @@ export class TinctDocument {
    * Insert a layer at a stack position; `0` puts it at the bottom. The index
    * is clamped to the stack, so `insert(Infinity, l)` is the same as `add`.
    */
-  insert(index: number, layer: TinctLayer): TinctDocument {
+  insert(index: number, layer: PipeLayer): PipeDocument {
     const next = this.#layers.slice()
     next.splice(clampIndex(index, this.#layers.length), 0, layer)
     return this.#withLayers(next)
   }
 
   /** Remove a layer, addressed by name or index. */
-  remove(ref: LayerRef): TinctDocument {
+  remove(ref: LayerRef): PipeDocument {
     const next = this.#layers.slice()
     next.splice(this.#indexOf(ref), 1)
     return this.#withLayers(next)
@@ -123,7 +123,7 @@ export class TinctDocument {
    * doc.update('sticker', (l) => l.opacity(0.5).blend('multiply'))
    * ```
    */
-  update(ref: LayerRef, fn: (layer: TinctLayer) => TinctLayer): TinctDocument {
+  update(ref: LayerRef, fn: (layer: PipeLayer) => PipeLayer): PipeDocument {
     const index = this.#indexOf(ref)
     const current = this.#layers[index]!
     const updated = fn(current)
@@ -142,7 +142,7 @@ export class TinctDocument {
    * const dragged = doc.move('sticker', { dx: 20, dy: -10 })
    * ```
    */
-  move(ref: LayerRef, { dx = 0, dy = 0 }: MoveDelta): TinctDocument {
+  move(ref: LayerRef, { dx = 0, dy = 0 }: MoveDelta): PipeDocument {
     return this.update(ref, (layer) => layer.at(layer.x + dx, layer.y + dy))
   }
 
@@ -150,7 +150,7 @@ export class TinctDocument {
    * Move a layer to a different stack position. The index is clamped, so
    * `reorder(ref, Infinity)` brings a layer to the front.
    */
-  reorder(ref: LayerRef, index: number): TinctDocument {
+  reorder(ref: LayerRef, index: number): PipeDocument {
     const from = this.#indexOf(ref)
     const to = clampIndex(index, this.#layers.length - 1)
     if (from === to) return this
@@ -189,12 +189,12 @@ export class TinctDocument {
    * })
    * ```
    */
-  async layerAt(x: number, y: number, options?: RenderOptions): Promise<TinctLayer | null> {
+  async layerAt(x: number, y: number, options?: RenderOptions): Promise<PipeLayer | null> {
     return hitTest(this.#layers, this.#cache, x, y, options?.signal)
   }
 
   /**
-   * Composite the document into a single {@link TinctImage}.
+   * Composite the document into a single {@link ImagePipe}.
    *
    * Nothing renders until an output method on the result is awaited, and the
    * result is an ordinary pipeline — chain more operations onto it, export
@@ -209,11 +209,11 @@ export class TinctDocument {
    * const thumb = await doc.flatten().resize({ width: 320 }).toBlob()
    * ```
    */
-  flatten(): TinctImage {
+  flatten(): ImagePipe {
     const canvas = this.#canvas
     const layers = this.#layers
     const cache = this.#cache
-    return TinctImage._create({
+    return ImagePipe._create({
       width: canvas.width,
       height: canvas.height,
       resolve: (signal) => compositeDocument(canvas, layers, cache, this.#emit, signal),
@@ -241,9 +241,9 @@ export class TinctDocument {
    *
    * @returns A function that removes the listener.
    */
-  on<K extends keyof TinctEventMap>(
+  on<K extends keyof ImagePipeEventMap>(
     event: K,
-    listener: (data: TinctEventMap[K]) => void,
+    listener: (data: ImagePipeEventMap[K]) => void,
   ): Unsubscribe {
     this.#listeners[event].add(listener)
     return () => this.#listeners[event].delete(listener)
@@ -258,20 +258,20 @@ export class TinctDocument {
     if (typeof ref === 'number') {
       if (!Number.isInteger(ref) || ref < 0 || ref >= this.#layers.length) {
         throw new Error(
-          `tinct: layer index ${String(ref)} is out of range — this document has ${String(this.#layers.length)} layer(s)`,
+          `imagepipe: layer index ${String(ref)} is out of range — this document has ${String(this.#layers.length)} layer(s)`,
         )
       }
       return ref
     }
     const index = this.#layers.findIndex((layer) => layer.name() === ref)
     if (index === -1) {
-      throw new Error(`tinct: no layer named '${ref}' in this document`)
+      throw new Error(`imagepipe: no layer named '${ref}' in this document`)
     }
     return index
   }
 
-  #withLayers(layers: readonly TinctLayer[]): TinctDocument {
-    return new TinctDocument(this.#canvas, layers, this.#listeners, this.#cache)
+  #withLayers(layers: readonly PipeLayer[]): PipeDocument {
+    return new PipeDocument(this.#canvas, layers, this.#listeners, this.#cache)
   }
 }
 
@@ -285,15 +285,15 @@ function clampIndex(index: number, max: number): number {
  *
  * @example
  * ```ts
- * import { document, layer } from 'tinctjs/layers'
+ * import { document, layer } from 'imagepipe/layers'
  *
  * const doc = document({ width: 1080, height: 1350, background: '#ffffff' })
  *   .add(layer(photo))
  *   .add(layer(sticker).at(650, 80).name('sticker'))
  * ```
  */
-export function document(options: DocumentOptions): TinctDocument {
-  return TinctDocument._create(validateCanvas(options))
+export function document(options: DocumentOptions): PipeDocument {
+  return PipeDocument._create(validateCanvas(options))
 }
 
 /** Canvas properties are checked once, wherever a document comes from. */
@@ -302,7 +302,7 @@ function validateCanvas(options: DocumentOptions): CanvasState {
   const height = Math.trunc(options.height)
   if (!(width > 0) || !(height > 0)) {
     throw new Error(
-      `tinct: document size must be positive — got ${String(options.width)}×${String(options.height)}`,
+      `imagepipe: document size must be positive — got ${String(options.width)}×${String(options.height)}`,
     )
   }
   const background = options.background ?? 'transparent'
@@ -311,13 +311,13 @@ function validateCanvas(options: DocumentOptions): CanvasState {
 }
 
 /**
- * Rebuild a document from {@link TinctDocument.toJSON} output.
+ * Rebuild a document from {@link PipeDocument.toJSON} output.
  *
  * Each source is decoded once and shared by every layer that references it,
  * then each layer's ops are replayed onto it — so a serialized `filter` op
- * needs its filter imported, exactly as {@link TinctImage.pipe} does.
+ * needs its filter imported, exactly as {@link ImagePipe.pipe} does.
  * Unknown versions throw rather than replaying garbage: they came from a
- * newer tinct.
+ * newer imagepipe.
  *
  * @example
  * ```ts
@@ -325,21 +325,19 @@ function validateCanvas(options: DocumentOptions): CanvasState {
  * const restored = fromJSON(JSON.parse(saved) as SerializedDocument)
  * ```
  */
-export function fromJSON(data: SerializedDocument): TinctDocument {
+export function fromJSON(data: SerializedDocument): PipeDocument {
   // Runtime data may carry any version despite the compile-time literal.
   if ((data.version as number) !== DOCUMENT_VERSION) {
     throw new Error(
-      `tinct: cannot read document version ${String(data.version)} — it was saved by a newer version of tinct`,
+      `imagepipe: cannot read document version ${String(data.version)} — it was saved by a newer version of imagepipe`,
     )
   }
 
-  const decoded = new Map<string, TinctImage>()
+  const decoded = new Map<string, ImagePipe>()
   for (const [id, source] of Object.entries(data.sources)) {
     decoded.set(
       id,
-      TinctImage._create(
-        decodePixels(source.width, source.height, source.data64, `source '${id}'`),
-      ),
+      ImagePipe._create(decodePixels(source.width, source.height, source.data64, `source '${id}'`)),
     )
   }
 
@@ -347,10 +345,10 @@ export function fromJSON(data: SerializedDocument): TinctDocument {
     const source = decoded.get(entry.source)
     if (!source) {
       throw new Error(
-        `tinct: a layer references source '${entry.source}', which is missing from the document's sources table`,
+        `imagepipe: a layer references source '${entry.source}', which is missing from the document's sources table`,
       )
     }
-    return TinctLayer._create(source.pipe(entry.ops), {
+    return PipeLayer._create(source.pipe(entry.ops), {
       x: entry.x,
       y: entry.y,
       opacity: entry.opacity,
@@ -360,5 +358,5 @@ export function fromJSON(data: SerializedDocument): TinctDocument {
     })
   })
 
-  return TinctDocument._create(validateCanvas(data.canvas), layers)
+  return PipeDocument._create(validateCanvas(data.canvas), layers)
 }

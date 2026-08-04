@@ -4,7 +4,7 @@
  * everywhere — and tiny, in keeping with the per-module budgets.
  *
  * ```ts
- * import { palette, dominantColor } from 'tinctjs/palette'
+ * import { palette, dominantColor } from 'imagepipe/palette'
  *
  * const pixels = await image.toImageData()
  * dominantColor(pixels).hex          // '#98572b'

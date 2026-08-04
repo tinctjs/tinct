@@ -10,19 +10,19 @@ import type { PixelData } from './pixel'
 
 /**
  * Constraint for a filter's options bag. Options must be JSON-serializable
- * for {@link TinctImage.history} to round-trip; this is validated at
+ * for {@link ImagePipe.history} to round-trip; this is validated at
  * serialization time rather than encoded in the type.
  */
 export type FilterOptions = Record<string, unknown>
 
 /** Internal access to a filter's definition. Not part of the public API. */
-export const FILTER_DEFINITION: unique symbol = Symbol('tinct.filter.definition')
+export const FILTER_DEFINITION: unique symbol = Symbol('imagepipe.filter.definition')
 
 /**
  * An immutable, serializable description of a filter application: the filter
  * name plus the options it was created with. Produced by filter factories
  * such as `grayscale()` or by factories returned from {@link defineFilter}.
- * Consumed by {@link TinctImage.apply}.
+ * Consumed by {@link ImagePipe.apply}.
  */
 export interface Filter<TOptions extends FilterOptions = FilterOptions> {
   /** Unique filter name, e.g. `'blur'`. Used as the serialization key. */

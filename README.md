@@ -1,20 +1,20 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./assets/logo-dark-mode.svg">
-    <img src="./assets/logo.svg" alt="Tinct" width="96" height="96">
+    <img src="./assets/logo.svg" alt="imagepipe" width="96" height="96">
   </picture>
 </p>
 
-# Tinct
+# imagepipe
 
 > Zero-dependency, TypeScript-first image editing for the browser. Small, composable, tree-shakeable.
 
-[![CI](https://github.com/tinctjs/tinct/actions/workflows/ci.yml/badge.svg)](https://github.com/tinctjs/tinct/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/tinctjs)](https://www.npmjs.com/package/tinctjs)
+[![CI](https://github.com/imagepipe/imagepipe/actions/workflows/ci.yml/badge.svg)](https://github.com/imagepipe/imagepipe/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/imagepipe)](https://www.npmjs.com/package/imagepipe)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![types](https://img.shields.io/badge/types-TypeScript-3178c6.svg)](./src/index.ts)
 
-Tinct is the Lodash of image editing: a library, not an app. Chainable, lazy,
+imagepipe is the Lodash of image editing: a library, not an app. Chainable, lazy,
 immutable pipelines over Canvas 2D — with transparent WebGL2 acceleration where
 available — that UI tools can be built on top of.
 
@@ -23,19 +23,23 @@ available — that UI tools can be built on top of.
 > WebGL2 in CI), and worker offloading are implemented; the same pipeline
 > renders identically everywhere — acceleration only changes speed.
 
+> **Renamed:** this package was previously published as `tinctjs` (≤ 0.2.0).
+> Same library, same API surface modulo the entry names: `tinct` → `imagepipe`,
+> `TinctImage` → `ImagePipe`.
+
 ## Installation
 
 ```sh
-npm install tinctjs
+npm install imagepipe
 ```
 
 ## Quick start
 
 ```ts
-import { tinct } from 'tinctjs'
-import { grayscale, blur } from 'tinctjs/filters'
+import { imagepipe } from 'imagepipe'
+import { grayscale, blur } from 'imagepipe/filters'
 
-const image = await tinct.load(fileOrUrlOrImageData)
+const image = await imagepipe.load(fileOrUrlOrImageData)
 
 const result = await image
   .crop({ aspect: '16:9', gravity: 'center' })
@@ -51,7 +55,7 @@ Nothing renders until you ask for output. Every operation returns a **new**
 immutable instance, so undo/redo is just keeping references:
 
 ```ts
-const original = await tinct.load(file)
+const original = await imagepipe.load(file)
 const step1 = original.crop({ aspect: '1:1' })
 const step2 = step1.apply(grayscale())
 // "undo" = use step1 again; original is untouched
@@ -61,7 +65,7 @@ const step2 = step1.apply(grayscale())
 
 ```ts
 // Custom filters: a CPU kernel, optionally accelerated by a WebGL2 shader
-import { defineFilter } from 'tinctjs'
+import { defineFilter } from 'imagepipe'
 
 const sepia = defineFilter({
   name: 'sepia',
@@ -81,43 +85,43 @@ image.on('progress', ({ pct }) => {
 
 ## API
 
-| API                            | Description                                                                                                                                                                                                                       |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tinct.load(source, options?)` | Load a `File`, `Blob`, URL, `ImageData`, `<img>`, `<canvas>`, or `OffscreenCanvas`. EXIF orientation is applied automatically; all other metadata (EXIF/GPS) is stripped on export — a privacy feature when handling user uploads |
-| `tinct.capabilities()`         | Feature detection: `{ webgl2, offscreenCanvas, workers }`                                                                                                                                                                         |
-| `.crop(options)`               | Pixel/percent region, or aspect ratio + gravity (incl. content-aware `'face'`)                                                                                                                                                    |
-| `.resize(options)`             | High-quality resampling (Lanczos multi-step downscale)                                                                                                                                                                            |
-| `.rotate(angle, options?)`     | 90° increments lossless; arbitrary angles expand the canvas                                                                                                                                                                       |
-| `.flip(axis)`                  | `'horizontal'` or `'vertical'`                                                                                                                                                                                                    |
-| `.adjust(options)`             | brightness, contrast, saturation, exposure (`-1..1`), hue (deg), gamma                                                                                                                                                            |
-| `.overlay(pixels, options?)`   | Watermark/logo compositing with gravity, margin, opacity                                                                                                                                                                          |
-| `.apply(filter)`               | Apply a built-in or custom filter                                                                                                                                                                                                 |
-| `.history()`                   | Serialize the pipeline to JSON-safe ops                                                                                                                                                                                           |
-| `.pipe(ops)`                   | Replay serialized ops                                                                                                                                                                                                             |
-| `.on(event, listener)`         | `progress` events during rendering                                                                                                                                                                                                |
-| `.toBlob(options?)`            | Encode to PNG / JPEG / WebP; `maxBytes` targets a file size, `signal` cancels                                                                                                                                                     |
-| `.toDataURL(options?)`         | Encode to a data URL                                                                                                                                                                                                              |
-| `.toImageData()`               | Raw pixels                                                                                                                                                                                                                        |
-| `.toCanvas()`                  | Render into a canvas                                                                                                                                                                                                              |
+| API                                | Description                                                                                                                                                                                                                       |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `imagepipe.load(source, options?)` | Load a `File`, `Blob`, URL, `ImageData`, `<img>`, `<canvas>`, or `OffscreenCanvas`. EXIF orientation is applied automatically; all other metadata (EXIF/GPS) is stripped on export — a privacy feature when handling user uploads |
+| `imagepipe.capabilities()`         | Feature detection: `{ webgl2, offscreenCanvas, workers }`                                                                                                                                                                         |
+| `.crop(options)`                   | Pixel/percent region, or aspect ratio + gravity (incl. content-aware `'face'`)                                                                                                                                                    |
+| `.resize(options)`                 | High-quality resampling (Lanczos multi-step downscale)                                                                                                                                                                            |
+| `.rotate(angle, options?)`         | 90° increments lossless; arbitrary angles expand the canvas                                                                                                                                                                       |
+| `.flip(axis)`                      | `'horizontal'` or `'vertical'`                                                                                                                                                                                                    |
+| `.adjust(options)`                 | brightness, contrast, saturation, exposure (`-1..1`), hue (deg), gamma                                                                                                                                                            |
+| `.overlay(pixels, options?)`       | Watermark/logo compositing with gravity, margin, opacity                                                                                                                                                                          |
+| `.apply(filter)`                   | Apply a built-in or custom filter                                                                                                                                                                                                 |
+| `.history()`                       | Serialize the pipeline to JSON-safe ops                                                                                                                                                                                           |
+| `.pipe(ops)`                       | Replay serialized ops                                                                                                                                                                                                             |
+| `.on(event, listener)`             | `progress` events during rendering                                                                                                                                                                                                |
+| `.toBlob(options?)`                | Encode to PNG / JPEG / WebP; `maxBytes` targets a file size, `signal` cancels                                                                                                                                                     |
+| `.toDataURL(options?)`             | Encode to a data URL                                                                                                                                                                                                              |
+| `.toImageData()`                   | Raw pixels                                                                                                                                                                                                                        |
+| `.toCanvas()`                      | Render into a canvas                                                                                                                                                                                                              |
 
-Built-in filters (`tinctjs/filters`): `grayscale`, `sepia`, `invert`, `blur`,
+Built-in filters (`imagepipe/filters`): `grayscale`, `sepia`, `invert`, `blur`,
 `sharpen`, `pixelate`, `vignette`, `duotone`, `noise`, `posterize`, `curves`
 (serializable tone curves — presets as JSON), and `median` (denoise).
 
-Companion modules, each ~1.5 kB and tree-shaken when unused: `tinctjs/face`
-(content-aware cropping), `tinctjs/hash` (ThumbHash placeholders),
-`tinctjs/palette` (dominant colors), `tinctjs/layers` (multi-image
+Companion modules, each ~1.5 kB and tree-shaken when unused: `imagepipe/face`
+(content-aware cropping), `imagepipe/hash` (ThumbHash placeholders),
+`imagepipe/palette` (dominant colors), `imagepipe/layers` (multi-image
 documents).
 
 ### Layers
 
-`tinctjs/layers` turns Tinct from a one-image pipeline into a document model
+`imagepipe/layers` turns imagepipe from a one-image pipeline into a document model
 — collage makers, meme tools, thumbnail builders, template renderers. Every
 layer's content is a full pipeline, so filters, adjustments, and geometry
 work per layer for free:
 
 ```ts
-import { document, layer } from 'tinctjs/layers'
+import { document, layer } from 'imagepipe/layers'
 
 const doc = document({ width: 1080, height: 1350, background: '#ffffff' })
   .add(layer(photo))
@@ -140,7 +144,7 @@ const blob = await dragged.flatten().toBlob({ format: 'webp' })
 | `.add` `.insert` `.remove` `.update` `.move` `.reorder` | All return a new document, addressing layers by name or index                                                         |
 | `.boundsOf(ref)`                                        | The layer's rectangle — arithmetic only, safe in a drag loop                                                          |
 | `.layerAt(x, y)`                                        | Top-most alpha-aware hit test: clicking a transparent hole selects what's behind it                                   |
-| `.flatten()`                                            | Composite to a `TinctImage` — chain, export, or reuse it as a layer                                                   |
+| `.flatten()`                                            | Composite to a `ImagePipe` — chain, export, or reuse it as a layer                                                    |
 | `.toJSON()` / `fromJSON(data)`                          | Versioned envelope with a shared sources table                                                                        |
 
 Blend modes: `source-over`, `multiply`, `screen`, `darken`, `lighten`.
@@ -148,12 +152,12 @@ Blend modes: `source-over`, `multiply`, `screen`, `darken`, `lighten`.
 Documents are immutable and share structure, so undo/redo is keeping
 references — and layer pixels are cached per pipeline, so dragging,
 reordering, or changing a layer's opacity re-runs only the composite pass,
-never the layers below. UIs own the mouse; Tinct owns the model and the math.
+never the layers below. UIs own the mouse; imagepipe owns the model and the math.
 
 ### Face-aware cropping
 
 ```ts
-import { enableFaceGravity } from 'tinctjs/face'
+import { enableFaceGravity } from 'imagepipe/face'
 
 enableFaceGravity() // once at startup; ships ~1 kB, tree-shaken if unused
 
@@ -181,13 +185,13 @@ pipeline.
 
 Complete little apps built on the published package, live from this repo:
 
-- **[Avatar Studio](https://tinctjs.github.io/tinct/avatar-studio/)** — face-aware crops, look presets, size-budgeted WebP export
-- **[Lookbook](https://tinctjs.github.io/tinct/lookbook/)** — film presets as pure JSON, replayed with `pipe()`
-- **[Shrinkwrap](https://tinctjs.github.io/tinct/optimizer/)** — batch upload optimizer with ThumbHash placeholders and dominant colors
-- **[Collage](https://tinctjs.github.io/tinct/collage/)** — a layered document editor: drag to place with `layerAt()`, per-layer filters and blending, undo as an array of references
+- **[Avatar Studio](https://imagepipe.github.io/imagepipe/avatar-studio/)** — face-aware crops, look presets, size-budgeted WebP export
+- **[Lookbook](https://imagepipe.github.io/imagepipe/lookbook/)** — film presets as pure JSON, replayed with `pipe()`
+- **[Shrinkwrap](https://imagepipe.github.io/imagepipe/optimizer/)** — batch upload optimizer with ThumbHash placeholders and dominant colors
+- **[Collage](https://imagepipe.github.io/imagepipe/collage/)** — a layered document editor: drag to place with `layerAt()`, per-layer filters and blending, undo as an array of references
 
 Source in [`examples/`](./examples), each runnable with `npm install && npm run dev`.
-The interactive [playground](https://tinctjs.github.io/tinct/) exposes every operation.
+The interactive [playground](https://imagepipe.github.io/imagepipe/) exposes every operation.
 
 ## Tree-shaking
 
@@ -196,8 +200,8 @@ you ship only the core; if you import `grayscale`, you ship only the grayscale
 kernel:
 
 ```ts
-import { tinct } from 'tinctjs' // core only
-import { grayscale } from 'tinctjs/filters' // + grayscale kernel, nothing else
+import { imagepipe } from 'imagepipe' // core only
+import { grayscale } from 'imagepipe/filters' // + grayscale kernel, nothing else
 ```
 
 The package is ESM-only with `sideEffects: false` and per-filter modules, so
@@ -220,15 +224,15 @@ cost for exactly these heavy cases.
 
 Enforced budgets in CI via [size-limit](https://github.com/ai/size-limit):
 
-| Import                              | Budget       | Measured (brotli) |
-| ----------------------------------- | ------------ | ----------------- |
-| Core (`tinct` + `defineFilter`)     | ≤ 10 kB gzip | ~8.6 kB           |
-| Each individual filter              | ≤ 2 kB gzip  | 0.44–0.52 kB      |
-| All filters together                | ≤ 10 kB      | ~3 kB             |
-| `tinctjs/face`, `/hash`, `/palette` | ≤ 2 kB each  | 1.2–1.6 kB        |
-| `tinctjs/layers` (own code)         | ≤ 4 kB       | ~1.6 kB           |
+| Import                                | Budget       | Measured (brotli) |
+| ------------------------------------- | ------------ | ----------------- |
+| Core (`imagepipe` + `defineFilter`)   | ≤ 10 kB gzip | ~8.6 kB           |
+| Each individual filter                | ≤ 2 kB gzip  | 0.44–0.52 kB      |
+| All filters together                  | ≤ 10 kB      | ~3 kB             |
+| `imagepipe/face`, `/hash`, `/palette` | ≤ 2 kB each  | 1.2–1.6 kB        |
+| `imagepipe/layers` (own code)         | ≤ 4 kB       | ~1.6 kB           |
 
-`tinctjs/layers` is measured as a delta: the size-limit config carries the
+`imagepipe/layers` is measured as a delta: the size-limit config carries the
 core baseline it builds on and the layers entry at baseline + 4 kB, so the
 budget tracks the layers code rather than the engine underneath it.
 
@@ -241,25 +245,25 @@ lazily-loaded artifact.
 
 Re-measure any time with `npm run size`; CI fails if a budget is exceeded.
 
-## When to use Tinct
+## When to use imagepipe
 
-|                                          | Tinct | Fabric.js / Konva | Jimp       | sharp     |
-| ---------------------------------------- | ----- | ----------------- | ---------- | --------- |
-| Runs in browser                          | ✅    | ✅                | ⚠️ (heavy) | ❌ (Node) |
-| Zero dependencies                        | ✅    | ❌                | ❌         | ❌        |
-| Tree-shakeable ops                       | ✅    | ❌                | ❌         | —         |
-| Immutable/serializable pipeline          | ✅    | ❌                | ❌         | ❌        |
-| Canvas scene graph / interactive objects | ❌    | ✅                | ❌         | ❌        |
-| Server-side batch processing             | ❌    | ❌                | ✅         | ✅        |
+|                                          | imagepipe | Fabric.js / Konva | Jimp       | sharp     |
+| ---------------------------------------- | --------- | ----------------- | ---------- | --------- |
+| Runs in browser                          | ✅        | ✅                | ⚠️ (heavy) | ❌ (Node) |
+| Zero dependencies                        | ✅        | ❌                | ❌         | ❌        |
+| Tree-shakeable ops                       | ✅        | ❌                | ❌         | —         |
+| Immutable/serializable pipeline          | ✅        | ❌                | ❌         | ❌        |
+| Canvas scene graph / interactive objects | ❌        | ✅                | ❌         | ❌        |
+| Server-side batch processing             | ❌        | ❌                | ✅         | ✅        |
 
-Use Tinct when you need programmatic image _editing_ in the browser — crop,
+Use imagepipe when you need programmatic image _editing_ in the browser — crop,
 resize, adjust, filter, export — especially as the engine under your own UI.
 Use a scene-graph library for interactive canvas apps, and sharp for servers.
 
 ## Roadmap
 
 - **v0.1** — everything above: geometry, adjustments, filters, serialization, CPU + WebGL2, workers.
-- **v0.3** — `tinctjs/layers`: multi-image documents, CPU compositing, blend modes, hit testing, versioned document serialization.
+- **v0.3** — `imagepipe/layers`: multi-image documents, CPU compositing, blend modes, hit testing, versioned document serialization.
 - **Later:** GPU compositing and affine layer placement, text, drawing/brushes, AI-assisted features, more codecs (AVIF), plugin ecosystem.
 
 ## Contributing
@@ -269,7 +273,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md). Architecture notes live in
 
 ## Credits
 
-Tinct's design owes a lot of its ideas and learnings to
+imagepipe's design owes a lot of its ideas and learnings to
 [Javed Ahmed](mailto:mjavedahmed4@gmail.com) and
 [Junaid Qadir](https://junaidqadir.com).
 

@@ -1,5 +1,5 @@
 /**
- * Public types for `tinctjs/layers`.
+ * Public types for `imagepipe/layers`.
  *
  * @packageDocumentation
  */
@@ -23,7 +23,7 @@ export interface DocumentOptions {
 }
 
 /**
- * How a layer is addressed in document methods: its {@link TinctLayer.name},
+ * How a layer is addressed in document methods: its {@link PipeLayer.name},
  * or its index in the stack (`0` is the bottom layer).
  */
 export type LayerRef = string | number
@@ -36,7 +36,7 @@ export interface LayerPlacement {
   y: number
 }
 
-/** The rectangle a layer occupies on the canvas. See {@link TinctDocument.boundsOf}. */
+/** The rectangle a layer occupies on the canvas. See {@link PipeDocument.boundsOf}. */
 export interface LayerBounds extends LayerPlacement {
   /** Rendered width of the layer's pipeline. */
   width: number
@@ -44,7 +44,7 @@ export interface LayerBounds extends LayerPlacement {
   height: number
 }
 
-/** A relative translation. See {@link TinctDocument.move}. */
+/** A relative translation. See {@link PipeDocument.move}. */
 export interface MoveDelta {
   /** Horizontal offset in pixels. @defaultValue `0` */
   dx?: number
@@ -68,7 +68,7 @@ export interface SerializedSource {
 export interface SerializedLayer {
   /** Key into the document's `sources` table. */
   readonly source: string
-  /** The layer pipeline's ops, exactly as {@link TinctImage.history} emits them. */
+  /** The layer pipeline's ops, exactly as {@link ImagePipe.history} emits them. */
   readonly ops: readonly SerializedOp[]
   readonly x: number
   readonly y: number
@@ -80,7 +80,7 @@ export interface SerializedLayer {
 
 /**
  * A serialized document: a versioned envelope of JSON-safe data, produced by
- * {@link TinctDocument.toJSON} and accepted by {@link fromJSON}.
+ * {@link PipeDocument.toJSON} and accepted by {@link fromJSON}.
  *
  * `version: 2` slots into the same envelope scheme as
  * {@link SerializedHistory}, so a v1 reader (`pipe()`) rejects a document

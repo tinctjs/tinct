@@ -3,7 +3,7 @@
  * self-contained serialization, immutability, and gravity validation.
  */
 import { describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import type { SerializedHistory, SerializedOp } from '../src/core/types'
 import { px, solid, expectRgbaClose } from './helpers'
 
@@ -12,7 +12,7 @@ const logo = (w = 4, h = 4, rgba: [number, number, number, number] = [255, 0, 0,
 
 describe('compositing', () => {
   test('an opaque overlay replaces the covered region and nothing else', async () => {
-    const out = await TinctImage._create(solid(10, 10, [0, 0, 255, 255]))
+    const out = await ImagePipe._create(solid(10, 10, [0, 0, 255, 255]))
       .overlay(logo(4, 4), { gravity: 'north-west' })
       ._render()
     expect(px(out, 0, 0)).toEqual([255, 0, 0, 255])
@@ -21,14 +21,14 @@ describe('compositing', () => {
   })
 
   test('opacity blends source over destination', async () => {
-    const out = await TinctImage._create(solid(6, 6, [0, 0, 200, 255]))
+    const out = await ImagePipe._create(solid(6, 6, [0, 0, 200, 255]))
       .overlay(logo(6, 6, [200, 0, 0, 255]), { gravity: 'center', opacity: 0.5 })
       ._render()
     expectRgbaClose(px(out, 3, 3), [100, 0, 100, 255], 2)
   })
 
   test("the overlay's own alpha participates (semi-transparent watermark)", async () => {
-    const out = await TinctImage._create(solid(6, 6, [0, 0, 200, 255]))
+    const out = await ImagePipe._create(solid(6, 6, [0, 0, 200, 255]))
       .overlay(logo(6, 6, [200, 0, 0, 128]), { gravity: 'center' })
       ._render()
     const [r, , b, a] = px(out, 3, 3)
@@ -38,7 +38,7 @@ describe('compositing', () => {
   })
 
   test('overlays larger than the base clip instead of throwing', async () => {
-    const out = await TinctImage._create(solid(4, 4, [0, 0, 255, 255]))
+    const out = await ImagePipe._create(solid(4, 4, [0, 0, 255, 255]))
       .overlay(logo(10, 10), { gravity: 'center' })
       ._render()
     expect([out.width, out.height]).toEqual([4, 4])
@@ -48,7 +48,7 @@ describe('compositing', () => {
 
 describe('placement', () => {
   test('south-east with margin is the watermark corner', async () => {
-    const out = await TinctImage._create(solid(20, 20, [0, 0, 0, 255]))
+    const out = await ImagePipe._create(solid(20, 20, [0, 0, 0, 255]))
       .overlay(logo(4, 4), { gravity: 'south-east', margin: 2 })
       ._render()
     expect(px(out, 17, 17)).toEqual([255, 0, 0, 255]) // inside the logo
@@ -57,7 +57,7 @@ describe('placement', () => {
   })
 
   test('center ignores margin', async () => {
-    const out = await TinctImage._create(solid(10, 10, [0, 0, 0, 255]))
+    const out = await ImagePipe._create(solid(10, 10, [0, 0, 0, 255]))
       .overlay(logo(2, 2), { gravity: 'center', margin: 3 })
       ._render()
     expect(px(out, 4, 4)).toEqual([255, 0, 0, 255])
@@ -66,19 +66,19 @@ describe('placement', () => {
 
   test("content-aware gravities are rejected up front — 'face' is for crops", () => {
     expect(() =>
-      TinctImage._create(solid(8, 8, [0, 0, 0, 255])).overlay(logo(), { gravity: 'face' }),
+      ImagePipe._create(solid(8, 8, [0, 0, 0, 255])).overlay(logo(), { gravity: 'face' }),
     ).toThrow(/compass position/)
   })
 })
 
 describe('serialization', () => {
   test('histories are self-contained: JSON round trip replays identically', async () => {
-    const edited = TinctImage._create(solid(12, 12, [0, 80, 160, 255])).overlay(
+    const edited = ImagePipe._create(solid(12, 12, [0, 80, 160, 255])).overlay(
       logo(3, 3, [250, 250, 0, 200]),
       { gravity: 'south-west', margin: 1, opacity: 0.7 },
     )
     const ops = JSON.parse(JSON.stringify(edited.history())) as SerializedHistory
-    const replayed = TinctImage._create(solid(12, 12, [0, 80, 160, 255])).pipe(ops)
+    const replayed = ImagePipe._create(solid(12, 12, [0, 80, 160, 255])).pipe(ops)
     expect((await replayed._render()).data).toEqual((await edited._render()).data)
   })
 
@@ -91,7 +91,7 @@ describe('serialization', () => {
       },
     ]
     await expect(
-      TinctImage._create(solid(8, 8, [0, 0, 0, 255]))
+      ImagePipe._create(solid(8, 8, [0, 0, 0, 255]))
         .pipe(ops)
         ._render(),
     ).rejects.toThrow(/overlay source has 4 byte\(s\), expected 64.*corrupt or truncated/)
@@ -99,7 +99,7 @@ describe('serialization', () => {
 
   test('the overlay source is copied, not referenced', async () => {
     const source = logo(2, 2)
-    const image = TinctImage._create(solid(6, 6, [0, 0, 0, 255])).overlay(source, {
+    const image = ImagePipe._create(solid(6, 6, [0, 0, 0, 255])).overlay(source, {
       gravity: 'north-west',
     })
     source.data.fill(0) // mutate after the fact

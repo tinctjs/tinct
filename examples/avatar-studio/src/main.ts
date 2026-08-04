@@ -1,17 +1,17 @@
 /**
- * Avatar Studio — a Tinct example.
+ * Avatar Studio — a imagepipe example.
  *
- * The entire image pipeline is these ~15 lines of tinct calls; everything
+ * The entire image pipeline is these ~15 lines of imagepipe calls; everything
  * else is plain DOM. Shows: face-aware cropping, adjustments, curves,
  * cancellable renders, and target-byte-size WebP export.
  */
-import { tinct, type TinctImage } from 'tinctjs'
-import { curves, grayscale, vignette } from 'tinctjs/filters'
-import { enableFaceGravity } from 'tinctjs/face'
+import { imagepipe, type ImagePipe } from 'imagepipe'
+import { curves, grayscale, vignette } from 'imagepipe/filters'
+import { enableFaceGravity } from 'imagepipe/face'
 
 enableFaceGravity()
 
-const LOOKS: Record<string, (image: TinctImage) => TinctImage> = {
+const LOOKS: Record<string, (image: ImagePipe) => ImagePipe> = {
   none: (i) => i,
   warm: (i) =>
     i
@@ -49,10 +49,10 @@ const preview = $('preview')
 const meta = $('meta')
 const download = $('download') as HTMLButtonElement
 
-let original: TinctImage | null = null
+let original: ImagePipe | null = null
 let inFlight: AbortController | null = null
 
-function buildAvatar(image: TinctImage): TinctImage {
+function buildAvatar(image: ImagePipe): ImagePipe {
   const size = Number(($('size') as HTMLSelectElement).value)
   const look = LOOKS[($('look') as HTMLSelectElement).value] ?? LOOKS.none!
   return look(image.crop({ aspect: '1:1', gravity: 'face' }).resize({ width: size }))
@@ -73,7 +73,7 @@ async function render(): Promise<void> {
 }
 
 async function loadFile(file: File): Promise<void> {
-  original = await tinct.load(file) // EXIF orientation handled automatically
+  original = await imagepipe.load(file) // EXIF orientation handled automatically
   drop.classList.remove('armed')
   drop.textContent = file.name
   void render()

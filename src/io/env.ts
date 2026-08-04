@@ -24,14 +24,14 @@ export function createCanvas(width: number, height: number): AnyCanvas {
     return canvas
   }
   throw new Error(
-    'tinct: no canvas available — tinct renders in browsers (or worker contexts with OffscreenCanvas)',
+    'imagepipe: no canvas available — imagepipe renders in browsers (or worker contexts with OffscreenCanvas)',
   )
 }
 
 /** @internal Create an on-DOM canvas element (for `toCanvas()`'s public type). */
 export function createElementCanvas(width: number, height: number): HTMLCanvasElement {
   if (typeof document === 'undefined') {
-    throw new Error('tinct: toCanvas() needs a DOM — use toImageData() or toBlob() in workers')
+    throw new Error('imagepipe: toCanvas() needs a DOM — use toImageData() or toBlob() in workers')
   }
   const canvas = document.createElement('canvas')
   canvas.width = width
@@ -43,7 +43,7 @@ export function createElementCanvas(width: number, height: number): HTMLCanvasEl
 export function get2d(canvas: AnyCanvas): Any2D {
   const ctx = (canvas as HTMLCanvasElement).getContext('2d')
   if (!ctx) {
-    throw new Error('tinct: could not acquire a 2d canvas context')
+    throw new Error('imagepipe: could not acquire a 2d canvas context')
   }
   return ctx
 }

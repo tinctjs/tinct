@@ -1,18 +1,18 @@
-# Tinct architecture
+# imagepipe architecture
 
-This document explains how Tinct is put together and why. The CPU path
+This document explains how imagepipe is put together and why. The CPU path
 described here is implemented and tested; the WebGL2/worker sections describe
 the Phase 3 design it was built to accommodate.
 
 ## Immutable op graph
 
-A `TinctImage` is a pair of:
+A `ImagePipe` is a pair of:
 
-- a **source**: decoded pixels (or a handle to them), fixed at `tinct.load`;
+- a **source**: decoded pixels (or a handle to them), fixed at `imagepipe.load`;
 - an ordered list of **op nodes**: plain, serializable descriptions of
   operations (`crop`, `resize`, `rotate`, `flip`, `adjust`, `filter`).
 
-Every operation method returns a _new_ `TinctImage` sharing the same source
+Every operation method returns a _new_ `ImagePipe` sharing the same source
 and listener channel, with one node appended. Nothing is copied but the op
 list, so deriving instances is O(ops) and cheap. Consumers get undo/redo by
 keeping references to intermediate instances — there is no mutable state to
@@ -51,7 +51,7 @@ Rules that keep this stable and versionable:
 - Filters serialize as `name` + fully-defaulted `options`, never code. The
   `overlay` op inlines its pixels (base64) so histories stay self-contained.
 - The `version` field is how stored histories outlive format changes:
-  `pipe()` rejects versions it does not understand — from a newer tinct —
+  `pipe()` rejects versions it does not understand — from a newer imagepipe —
   instead of replaying garbage. Bare op arrays (histories saved before the
   envelope existed) are still accepted as version 1.
 
@@ -119,7 +119,7 @@ floats, so outputs may differ by a couple of LSB — within test tolerance.
 
 ## Feature detection and graceful fallback
 
-`tinct.capabilities()` reports `webgl2`, `offscreenCanvas`, and `workers`.
+`imagepipe.capabilities()` reports `webgl2`, `offscreenCanvas`, and `workers`.
 Internally the GPU backend is created lazily and memoized per realm; any
 creation failure memoizes `null` and the executor never asks again. The
 fallback ladder never throws:
@@ -160,7 +160,7 @@ is reported per-op with sub-op granularity for chunked CPU work.
 
 ## Content-aware gravity
 
-`gravity: 'face'` reuses the registry pattern: `tinctjs/face` registers a
+`gravity: 'face'` reuses the registry pattern: `imagepipe/face` registers a
 _gravity resolver_ — `(pixels, cropWidth, cropHeight) → top-left origin` —
 via an explicit `enableFaceGravity()` call (a bare side-effect import would
 be tree-shaken away). Rules that keep it coherent with the rest of the
@@ -180,8 +180,8 @@ design:
 
 ## Layers (`layers/`)
 
-A `TinctDocument` is a fixed canvas, a background color, and an ordered list
-of `TinctLayer`s. A layer is a whole `TinctImage` plus placement, opacity,
+A `PipeDocument` is a fixed canvas, a background color, and an ordered list
+of `PipeLayer`s. A layer is a whole `ImagePipe` plus placement, opacity,
 blend mode, visibility, and an optional name — so every filter, adjustment,
 and geometry op works per layer with no new code. Placement is translate-only
 in P1; scale and rotate are already pipeline ops on the layer's source.
@@ -189,7 +189,7 @@ in P1; scale and rotate are already pipeline ops on the layer's source.
 Documents follow the same rules as editors: immutable, structurally shared,
 mutations return new instances. Undo/redo is keeping references.
 
-**Deferred sources.** `document.flatten()` returns a `TinctImage`
+**Deferred sources.** `document.flatten()` returns a `ImagePipe`
 _synchronously_, even though compositing is async, because a pipeline's
 source may be a `DeferredSource` — `{ width, height, resolve(signal) }`.
 Dimensions are known up front, so `image.width` stays synchronous
@@ -199,10 +199,10 @@ reuses the entire output surface (`toBlob`, chaining, progress, abort) for
 free without core learning that layers exist.
 
 **Dirty-layer rendering.** Each document carries a
-`WeakMap<TinctImage, PixelData>` shared by reference with every document
+`WeakMap<ImagePipe, PixelData>` shared by reference with every document
 derived from it. Keying on pipeline identity makes the cache exactly as
 precise as the immutable model: a move, reorder, opacity, blend, or
-visibility change preserves the layer's `TinctImage`, so it hits and only
+visibility change preserves the layer's `ImagePipe`, so it hits and only
 the composite loop repeats; editing a layer's pipeline produces a new object,
 so only that layer re-renders — and its own `RenderCache` still resumes from
 the longest unchanged prefix.
@@ -223,7 +223,7 @@ inline base64 like `overlay` does, so a saved document replays without a
 fetch; external references are a slot the format leaves open.
 
 Boundaries: `layers/` may depend on `core/` and `cpu/`; nothing in `core/`
-may know layers exist, and importing nothing from `tinctjs/layers` costs no
+may know layers exist, and importing nothing from `imagepipe/layers` costs no
 bytes.
 
 ## Extension model

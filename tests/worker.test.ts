@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class -- bare stub classes stand in for Worker */
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { shouldUseWorker } from '../src/core/worker-client'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import type { OpNode } from '../src/core/executor'
 import { solid, gradientH } from './helpers'
 
@@ -57,7 +57,7 @@ describe('worker fallback', () => {
       },
     )
 
-    const image = TinctImage._create(gradientH(1024, 512)).flip('horizontal')
+    const image = ImagePipe._create(gradientH(1024, 512)).flip('horizontal')
     const out = await image._render()
 
     // Correct result despite the broken worker: leftmost gradient value 255.

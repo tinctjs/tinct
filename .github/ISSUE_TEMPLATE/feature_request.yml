@@ -13,7 +13,7 @@ body:
     id: proposal
     attributes:
       label: Proposed API
-      description: Sketch the API you'd want. Tinct is API-first — this is the most useful part.
+      description: Sketch the API you'd want. imagepipe is API-first — this is the most useful part.
       render: ts
     validations:
       required: true

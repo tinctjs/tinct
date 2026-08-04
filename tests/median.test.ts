@@ -1,6 +1,6 @@
 /** median(): speckle removal, edge preservation, edge-window behavior. */
 import { describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { median } from '../src/filters/index'
 import type { PixelData } from '../src/core/pixel'
 import { createPixelData } from '../src/core/pixel'
@@ -25,7 +25,7 @@ function speckled(): PixelData {
 
 describe('median', () => {
   test('removes salt-and-pepper speckles completely', async () => {
-    const out = await TinctImage._create(speckled()).apply(median())._render()
+    const out = await ImagePipe._create(speckled()).apply(median())._render()
     for (let y = 0; y < 15; y++) {
       for (let x = 0; x < 15; x++) {
         expect(px(out, x, y)).toEqual([128, 128, 128, 255])
@@ -46,7 +46,7 @@ describe('median', () => {
         p.data[i + 3] = 255
       }
     }
-    const out = await TinctImage._create(p)
+    const out = await ImagePipe._create(p)
       .apply(median({ radius: 1 }))
       ._render()
     expect(px(out, 7, 4)).toEqual([0, 0, 0, 255])
@@ -55,11 +55,11 @@ describe('median', () => {
 
   test('solid images and radius 0 are no-ops', async () => {
     const src = solid(6, 6, [90, 120, 150, 137])
-    const filtered = await TinctImage._create(src)
+    const filtered = await ImagePipe._create(src)
       .apply(median({ radius: 2 }))
       ._render()
     expect(filtered.data).toEqual(src.data)
-    const zero = await TinctImage._create(speckled())
+    const zero = await ImagePipe._create(speckled())
       .apply(median({ radius: 0 }))
       ._render()
     expect(zero.data).toEqual(speckled().data)
@@ -68,7 +68,7 @@ describe('median', () => {
   test('alpha is untouched', async () => {
     const p = speckled()
     p.data[3] = 42 // odd alpha on one pixel
-    const out = await TinctImage._create(p).apply(median())._render()
+    const out = await ImagePipe._create(p).apply(median())._render()
     expect(out.data[3]).toBe(42)
   })
 
@@ -83,7 +83,7 @@ describe('median', () => {
       p.data[i * 4 + 2] = values[i]!
       p.data[i * 4 + 3] = 255
     }
-    const out = await TinctImage._create(p).apply(median())._render()
+    const out = await ImagePipe._create(p).apply(median())._render()
     expect(px(out, 0, 0)[0]).toBe(30)
   })
 })

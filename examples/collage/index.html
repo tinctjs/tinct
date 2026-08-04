@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Collage — a layered document editor, a Tinct example</title>
+    <title>Collage — a layered document editor, a imagepipe example</title>
     <style>
       * {
         box-sizing: border-box;
@@ -260,9 +260,10 @@
     <main>
       <h1>Col<span>lage</span></h1>
       <p class="sub">
-        A layered document built with <code>tinctjs/layers</code>. Drag a layer to place it, restack
-        it, blend it, run a filter on it alone — every layer is a full Tinct pipeline. Documents are
-        immutable, so undo is an array of references and save is <code>JSON.stringify</code>.
+        A layered document built with <code>imagepipe/layers</code>. Drag a layer to place it,
+        restack it, blend it, run a filter on it alone — every layer is a full imagepipe pipeline.
+        Documents are immutable, so undo is an array of references and save is
+        <code>JSON.stringify</code>.
       </p>
 
       <div class="app">
@@ -334,7 +335,7 @@
         pointer at frame rate while the composite catches up behind it. Picking the layer under the
         pointer is <code>layerAt()</code>, which is alpha-aware and therefore async: the drag hits
         once on pointerdown, then moves synchronously.
-        <a href="https://github.com/tinctjs/tinct">github.com/tinctjs/tinct</a>
+        <a href="https://github.com/imagepipe/imagepipe">github.com/imagepipe/imagepipe</a>
       </p>
     </main>
     <script type="module" src="./src/main.ts"></script>

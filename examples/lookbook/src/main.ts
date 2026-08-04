@@ -1,15 +1,15 @@
 /**
- * Lookbook — a Tinct example.
+ * Lookbook — a imagepipe example.
  *
  * The whole point: a "filter preset" is a serialized pipeline. These are
  * plain JSON objects you could store in a database, ship from an API, or
  * let users trade — and `image.pipe(preset)` replays them identically on
  * any device.
  */
-import { tinct, type SerializedHistory, type TinctImage } from 'tinctjs'
+import { imagepipe, type SerializedHistory, type ImagePipe } from 'imagepipe'
 // Importing a filter is what makes its serialized ops replayable — the
 // registry rule: code ships iff imported.
-import { curves, duotone, grayscale, noise, vignette } from 'tinctjs/filters'
+import { curves, duotone, grayscale, noise, vignette } from 'imagepipe/filters'
 
 ;(void curves, void duotone, void grayscale, void noise, void vignette)
 
@@ -117,7 +117,7 @@ const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElemen
 const hero = $('hero')
 const looksRow = $('looks')
 const jsonBox = $('json') as HTMLTextAreaElement
-let original: TinctImage | null = null
+let original: ImagePipe | null = null
 let activeName = 'Golden Hour'
 
 /** A moody sample scene drawn locally, so the demo works offline. */
@@ -202,13 +202,13 @@ $('upload').addEventListener('click', () => ($('file') as HTMLInputElement).clic
 ;($('file') as HTMLInputElement).addEventListener('change', (e) => {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
-  void tinct.load(file).then((img) => {
+  void imagepipe.load(file).then((img) => {
     original = img
     return buildThumbs()
   })
 })
 
-void tinct.load(samplePhoto()).then((img) => {
+void imagepipe.load(samplePhoto()).then((img) => {
   original = img
   return buildThumbs()
 })

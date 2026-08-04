@@ -1,8 +1,8 @@
 [
   {
-    "name": "core: tinct + defineFilter",
+    "name": "core: imagepipe + defineFilter",
     "path": "dist/index.js",
-    "import": "{ tinct, defineFilter }",
+    "import": "{ imagepipe, defineFilter }",
     "limit": "10 kB"
   },
   {
@@ -41,9 +41,9 @@
     "limit": "2 kB"
   },
   {
-    "name": "layers baseline: core TinctImage",
+    "name": "layers baseline: core ImagePipe",
     "path": "dist/index.js",
-    "import": "{ TinctImage }",
+    "import": "{ ImagePipe }",
     "limit": "9 kB"
   },
   {

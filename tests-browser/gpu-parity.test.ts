@@ -7,7 +7,7 @@
  * anything larger is a shader bug.
  */
 import { describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { _setGpuBackend } from '../src/gl/backend'
 import { getWebgl2Backend } from '../src/gl/renderer'
 import type { PixelData } from '../src/core/pixel'
@@ -47,12 +47,12 @@ interface Parity {
   tightShare?: number
 }
 
-async function compare(build: (image: TinctImage) => TinctImage, parity: Parity): Promise<void> {
-  const gpu = await build(TinctImage._create(fixture()))._render()
+async function compare(build: (image: ImagePipe) => ImagePipe, parity: Parity): Promise<void> {
+  const gpu = await build(ImagePipe._create(fixture()))._render()
 
   _setGpuBackend(null)
   try {
-    const cpu = await build(TinctImage._create(fixture()))._render()
+    const cpu = await build(ImagePipe._create(fixture()))._render()
     expect(gpu.width).toBe(cpu.width)
     expect(gpu.height).toBe(cpu.height)
 

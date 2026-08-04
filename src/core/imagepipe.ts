@@ -1,16 +1,16 @@
 /**
- * The `tinct` entry point: loading images and probing capabilities.
+ * The `imagepipe` entry point: loading images and probing capabilities.
  *
  * @packageDocumentation
  */
 
 import type { Capabilities, ImageSource, LoadOptions } from './types'
-import { TinctImage } from './editor'
+import { ImagePipe } from './editor'
 import { decodeSource } from '../io/load'
 
 /**
  * Load an image from any supported source and get back an immutable
- * {@link TinctImage} pipeline. Decoding happens eagerly; everything after
+ * {@link ImagePipe} pipeline. Decoding happens eagerly; everything after
  * is lazy until an output method is awaited.
  *
  * EXIF orientation is applied automatically, so phone photos load upright.
@@ -21,17 +21,17 @@ import { decodeSource } from '../io/load'
  *
  * @example
  * ```ts
- * const image = await tinct.load(file)
- * const image = await tinct.load('https://example.com/photo.jpg')
- * const image = await tinct.load(imageData)
+ * const image = await imagepipe.load(file)
+ * const image = await imagepipe.load('https://example.com/photo.jpg')
+ * const image = await imagepipe.load(imageData)
  * ```
  */
-async function load(source: ImageSource, options?: LoadOptions): Promise<TinctImage> {
-  return TinctImage._create(await decodeSource(source, options))
+async function load(source: ImageSource, options?: LoadOptions): Promise<ImagePipe> {
+  return ImagePipe._create(await decodeSource(source, options))
 }
 
 /**
- * Detect what the current environment supports. Tinct consults the same
+ * Detect what the current environment supports. imagepipe consults the same
  * detection internally to pick execution paths; this is exposed so consumers
  * can surface it (e.g. show a "GPU accelerated" badge).
  */
@@ -44,14 +44,14 @@ function capabilities(): Capabilities {
 }
 
 /**
- * The Tinct entry point.
+ * The imagepipe entry point.
  *
  * @example
  * ```ts
- * import { tinct } from 'tinctjs'
+ * import { imagepipe } from 'imagepipe'
  *
- * const image = await tinct.load(file)
+ * const image = await imagepipe.load(file)
  * const blob = await image.resize({ width: 1280 }).toBlob({ format: 'webp' })
  * ```
  */
-export const tinct = { load, capabilities } as const
+export const imagepipe = { load, capabilities } as const

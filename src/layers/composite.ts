@@ -16,7 +16,7 @@ import { blendFn } from '../cpu/blend'
 import { parseColor, type Rgba } from '../cpu/color'
 import { compositeOver } from '../cpu/composite'
 import type { CanvasState, LayerCache } from './document'
-import type { TinctLayer } from './layer'
+import type { PipeLayer } from './layer'
 
 /**
  * @internal
@@ -28,7 +28,7 @@ import type { TinctLayer } from './layer'
  * is ours; callers must treat it as read-only.
  */
 export async function renderLayer(
-  layer: TinctLayer,
+  layer: PipeLayer,
   cache: LayerCache,
   signal?: AbortSignal,
 ): Promise<PixelData> {
@@ -40,7 +40,7 @@ export async function renderLayer(
 }
 
 /** @internal Layers that actually contribute pixels, bottom to top. */
-function drawable(layers: readonly TinctLayer[]): readonly TinctLayer[] {
+function drawable(layers: readonly PipeLayer[]): readonly PipeLayer[] {
   return layers.filter((layer) => layer.visible() && layer.opacity() > 0)
 }
 
@@ -51,7 +51,7 @@ function drawable(layers: readonly TinctLayer[]): readonly TinctLayer[] {
  */
 export async function compositeDocument(
   canvas: CanvasState,
-  layers: readonly TinctLayer[],
+  layers: readonly PipeLayer[],
   cache: LayerCache,
   emit: (pct: number, op: string) => void,
   signal?: AbortSignal,
@@ -80,12 +80,12 @@ export async function compositeDocument(
  * rejected by arithmetic, so a miss over empty canvas renders nothing.
  */
 export async function hitTest(
-  layers: readonly TinctLayer[],
+  layers: readonly PipeLayer[],
   cache: LayerCache,
   x: number,
   y: number,
   signal?: AbortSignal,
-): Promise<TinctLayer | null> {
+): Promise<PipeLayer | null> {
   const px = Math.floor(x)
   const py = Math.floor(y)
   if (!Number.isFinite(px) || !Number.isFinite(py)) return null

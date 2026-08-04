@@ -5,7 +5,7 @@
  * cancellation.
  */
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import type { OpNode } from '../src/core/executor'
 import { defineFilter } from '../src/core/filter'
 import type { PixelData } from '../src/core/pixel'
@@ -14,7 +14,7 @@ import { document, layer } from '../src/layers'
 import { gradientH, px, solid } from './helpers'
 
 const image = (w: number, h: number, rgba: [number, number, number, number]) =>
-  TinctImage._create(solid(w, h, rgba))
+  ImagePipe._create(solid(w, h, rgba))
 
 const RED: [number, number, number, number] = [255, 0, 0, 255]
 const BLUE: [number, number, number, number] = [0, 0, 255, 255]
@@ -236,7 +236,7 @@ describe('layerAt', () => {
     ]) {
       pixels.data[(y! * 4 + x!) * 4 + 3] = 0 // punch a transparent hole
     }
-    return TinctImage._create(pixels)
+    return ImagePipe._create(pixels)
   }
 
   test('returns the top-most layer under the point', async () => {
@@ -378,7 +378,7 @@ describe('worker offloading', () => {
     expect(shouldUseWorker(ops, source)).toBe(true) // the layer really does qualify
 
     const out = await document({ width: 1024, height: 512 })
-      .add(layer(TinctImage._create(source).flip('horizontal')))
+      .add(layer(ImagePipe._create(source).flip('horizontal')))
       .flatten()
       ._render()
 

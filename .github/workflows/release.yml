@@ -22,7 +22,7 @@ jobs:
           cache: npm
       # Publishing uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret
       # anywhere. The trusted publisher is configured on the npm package
-      # settings: org tinctjs, repo tinct, workflow release.yml. Requires
+      # settings: org imagepipe, repo imagepipe, workflow release.yml. Requires
       # npm >= 11.5.1 for the OIDC token exchange; provenance is automatic.
       - run: npm install -g npm@latest
       - run: npm ci

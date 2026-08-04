@@ -1,6 +1,6 @@
 /**
  * Source decoding: every supported {@link ImageSource} becomes a
- * {@link PixelData} eagerly at `tinct.load` time.
+ * {@link PixelData} eagerly at `imagepipe.load` time.
  *
  * @packageDocumentation
  * @internal
@@ -32,7 +32,7 @@ export async function decodeSource(source: ImageSource, options?: LoadOptions): 
   if (typeof source === 'string' || source instanceof URL) {
     return decodeUrl(source instanceof URL ? source.href : source, options)
   }
-  throw new Error('tinct: unsupported image source')
+  throw new Error('imagepipe: unsupported image source')
 }
 
 /** Canvases may hold non-2d contexts; try direct read, fall back to drawing. */
@@ -42,7 +42,7 @@ function canvasToPixels(
   height: number,
 ): PixelData {
   if (width === 0 || height === 0) {
-    throw new Error('tinct: cannot load from a zero-sized canvas')
+    throw new Error('imagepipe: cannot load from a zero-sized canvas')
   }
   try {
     const image = get2d(canvas).getImageData(0, 0, width, height)
@@ -92,7 +92,7 @@ function createOrientedBitmap(blob: Blob): Promise<ImageBitmap> {
 
 function decodeUrl(url: string, options?: LoadOptions): Promise<PixelData> {
   if (typeof Image === 'undefined') {
-    throw new Error('tinct: URL sources need a DOM Image — pass a Blob or ImageData instead')
+    throw new Error('imagepipe: URL sources need a DOM Image — pass a Blob or ImageData instead')
   }
   return new Promise<PixelData>((resolve, reject) => {
     const img = new Image()
@@ -103,7 +103,7 @@ function decodeUrl(url: string, options?: LoadOptions): Promise<PixelData> {
       reject(
         options?.signal?.reason instanceof Error
           ? options.signal.reason
-          : new Error('tinct: load aborted'),
+          : new Error('imagepipe: load aborted'),
       )
     }
     if (options?.signal?.aborted) {
@@ -122,7 +122,7 @@ function decodeUrl(url: string, options?: LoadOptions): Promise<PixelData> {
     }
     img.onerror = () => {
       options?.signal?.removeEventListener('abort', onAbort)
-      reject(new Error(`tinct: failed to load image from '${url}'`))
+      reject(new Error(`imagepipe: failed to load image from '${url}'`))
     }
     img.src = url
   })
@@ -130,7 +130,7 @@ function decodeUrl(url: string, options?: LoadOptions): Promise<PixelData> {
 
 function drawToPixels(source: CanvasImageSource, width: number, height: number): PixelData {
   if (width === 0 || height === 0) {
-    throw new Error('tinct: cannot load a zero-sized image')
+    throw new Error('imagepipe: cannot load a zero-sized image')
   }
   const canvas = createCanvas(width, height)
   const ctx = get2d(canvas)

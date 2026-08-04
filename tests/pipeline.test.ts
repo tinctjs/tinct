@@ -4,14 +4,14 @@
  * Rendering itself is Phase 2 and not exercised here.
  */
 import { describe, expect, test } from 'vitest'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { defineFilter } from '../src/core/filter'
 import type { SerializedHistory } from '../src/core/types'
 import { createPixelData } from '../src/core/pixel'
 import { grayscale, blur, duotone } from '../src/filters/index'
 
 const SOURCE = createPixelData(1920, 1080)
-const base = (): TinctImage => TinctImage._create(SOURCE)
+const base = (): ImagePipe => ImagePipe._create(SOURCE)
 
 describe('immutability', () => {
   test('operations return new instances and never mutate the receiver', () => {

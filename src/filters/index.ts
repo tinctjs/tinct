@@ -3,7 +3,7 @@
  * tree-shakeable — importing `grayscale` ships only the grayscale kernel.
  *
  * ```ts
- * import { grayscale, blur } from 'tinctjs/filters'
+ * import { grayscale, blur } from 'imagepipe/filters'
  *
  * image.apply(grayscale()).apply(blur({ radius: 4 }))
  * ```

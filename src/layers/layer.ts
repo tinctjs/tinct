@@ -1,10 +1,10 @@
 /**
- * A single layer: a Tinct pipeline plus where and how it lands on the canvas.
+ * A single layer: a imagepipe pipeline plus where and how it lands on the canvas.
  *
  * @packageDocumentation
  */
 
-import type { TinctImage } from '../core/editor'
+import type { ImagePipe } from '../core/editor'
 import { blendFn, type BlendMode } from '../cpu/blend'
 import type { LayerPlacement } from './types'
 
@@ -23,7 +23,7 @@ const DEFAULTS: LayerState = { x: 0, y: 0, opacity: 1, blend: 'source-over', vis
 /**
  * An immutable layer.
  *
- * Content is a whole {@link TinctImage} pipeline, so every filter,
+ * Content is a whole {@link ImagePipe} pipeline, so every filter,
  * adjustment, and geometry operation works per layer — resize the source to
  * scale a layer, rotate it to rotate a layer. Placement itself is a
  * translation in whole pixels; fractional coordinates are rounded.
@@ -45,22 +45,22 @@ const DEFAULTS: LayerState = { x: 0, y: 0, opacity: 1, blend: 'source-over', vis
  * badge.opacity() // 0.8 — reading, not setting
  * ```
  */
-export class TinctLayer {
-  readonly #source: TinctImage
+export class PipeLayer {
+  readonly #source: ImagePipe
   readonly #state: LayerState
 
-  private constructor(source: TinctImage, state: LayerState) {
+  private constructor(source: ImagePipe, state: LayerState) {
     this.#source = source
     this.#state = state
   }
 
   /** @internal Use {@link layer}. */
-  static _create(source: TinctImage, state: LayerState = DEFAULTS): TinctLayer {
-    return new TinctLayer(source, state)
+  static _create(source: ImagePipe, state: LayerState = DEFAULTS): PipeLayer {
+    return new PipeLayer(source, state)
   }
 
   /** The pipeline that produces this layer's pixels. */
-  get source(): TinctImage {
+  get source(): ImagePipe {
     return this.#source
   }
 
@@ -87,8 +87,8 @@ export class TinctLayer {
   /** Read the layer's placement. */
   at(): LayerPlacement
   /** Place the layer's top-left corner at `(x, y)`, rounded to whole pixels. */
-  at(x: number, y: number): TinctLayer
-  at(x?: number, y?: number): LayerPlacement | TinctLayer {
+  at(x: number, y: number): PipeLayer
+  at(x?: number, y?: number): LayerPlacement | PipeLayer {
     if (x === undefined || y === undefined) return { x: this.#state.x, y: this.#state.y }
     return this.#with({ x: Math.round(x), y: Math.round(y) })
   }
@@ -96,8 +96,8 @@ export class TinctLayer {
   /** Read the layer's opacity. */
   opacity(): number
   /** Set the opacity multiplier applied over the layer's own alpha, clamped to `0..1`. */
-  opacity(value: number): TinctLayer
-  opacity(value?: number): number | TinctLayer {
+  opacity(value: number): PipeLayer
+  opacity(value?: number): number | PipeLayer {
     if (value === undefined) return this.#state.opacity
     return this.#with({ opacity: Math.max(0, Math.min(1, value)) })
   }
@@ -105,8 +105,8 @@ export class TinctLayer {
   /** Read the layer's blend mode. */
   blend(): BlendMode
   /** Set the blend mode. Unknown modes throw immediately. */
-  blend(mode: BlendMode): TinctLayer
-  blend(mode?: BlendMode): BlendMode | TinctLayer {
+  blend(mode: BlendMode): PipeLayer
+  blend(mode?: BlendMode): BlendMode | PipeLayer {
     if (mode === undefined) return this.#state.blend
     blendFn(mode) // validate up front rather than at render time
     return this.#with({ blend: mode })
@@ -115,8 +115,8 @@ export class TinctLayer {
   /** Read whether the layer is drawn. */
   visible(): boolean
   /** Show or hide the layer. Hidden layers are skipped entirely when flattening. */
-  visible(value: boolean): TinctLayer
-  visible(value?: boolean): boolean | TinctLayer {
+  visible(value: boolean): PipeLayer
+  visible(value?: boolean): boolean | PipeLayer {
     if (value === undefined) return this.#state.visible
     return this.#with({ visible: value })
   }
@@ -124,8 +124,8 @@ export class TinctLayer {
   /** Read the layer's name, if it has one. */
   name(): string | undefined
   /** Name the layer so document methods can address it by name instead of index. */
-  name(value: string): TinctLayer
-  name(value?: string): string | undefined | TinctLayer {
+  name(value: string): PipeLayer
+  name(value?: string): string | undefined | PipeLayer {
     if (value === undefined) return this.#state.name
     return this.#with({ name: value })
   }
@@ -135,8 +135,8 @@ export class TinctLayer {
     return this.#state
   }
 
-  #with(changes: Partial<LayerState>): TinctLayer {
-    return new TinctLayer(this.#source, { ...this.#state, ...changes })
+  #with(changes: Partial<LayerState>): PipeLayer {
+    return new PipeLayer(this.#source, { ...this.#state, ...changes })
   }
 }
 
@@ -145,10 +145,10 @@ export class TinctLayer {
  *
  * @example
  * ```ts
- * import { layer } from 'tinctjs/layers'
+ * import { layer } from 'imagepipe/layers'
  * doc.add(layer(photo).at(0, 0))
  * ```
  */
-export function layer(source: TinctImage): TinctLayer {
-  return TinctLayer._create(source)
+export function layer(source: ImagePipe): PipeLayer {
+  return PipeLayer._create(source)
 }

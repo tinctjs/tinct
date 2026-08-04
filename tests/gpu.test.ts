@@ -7,7 +7,7 @@
  */
 import { afterEach, describe, expect, test } from 'vitest'
 import { _setGpuBackend, type GpuPass } from '../src/gl/backend'
-import { TinctImage } from '../src/core/editor'
+import { ImagePipe } from '../src/core/editor'
 import { grayscale, invert, blur, sepia, median } from '../src/filters/index'
 import { gradientH, solid } from './helpers'
 
@@ -15,7 +15,7 @@ afterEach(() => {
   _setGpuBackend(undefined)
 })
 
-const chain = (image: TinctImage): TinctImage =>
+const chain = (image: ImagePipe): ImagePipe =>
   image
     .adjust({ brightness: 0.2 })
     .apply(grayscale())
@@ -33,7 +33,7 @@ describe('gpu batching', () => {
       },
     })
 
-    await chain(TinctImage._create(gradientH(8, 8)))._render()
+    await chain(ImagePipe._create(gradientH(8, 8)))._render()
 
     // adjust + grayscale + invert batch together; median runs on CPU; sepia
     // flushes alone at the end.
@@ -50,7 +50,7 @@ describe('gpu batching', () => {
       },
     })
 
-    await TinctImage._create(gradientH(8, 8))
+    await ImagePipe._create(gradientH(8, 8))
       .apply(grayscale())
       .apply(blur({ radius: 2 }))
       ._render()
@@ -65,7 +65,7 @@ describe('gpu batching', () => {
     const marker = solid(4, 4, [1, 2, 3, 255])
     _setGpuBackend({ run: () => marker })
 
-    const out = await TinctImage._create(solid(4, 4, [200, 200, 200, 255]))
+    const out = await ImagePipe._create(solid(4, 4, [200, 200, 200, 255]))
       .apply(invert())
       ._render()
 
@@ -81,7 +81,7 @@ describe('gpu batching', () => {
       },
     })
 
-    await TinctImage._create(gradientH(4, 4))
+    await ImagePipe._create(gradientH(4, 4))
       .adjust({ exposure: 0.5, gamma: 2, saturation: -1 })
       ._render()
 
@@ -94,7 +94,7 @@ describe('gpu batching', () => {
 
 describe('gpu fallback', () => {
   test('a failing backend produces byte-identical output to the pure CPU path', async () => {
-    const make = (): TinctImage => chain(TinctImage._create(gradientH(16, 16)))
+    const make = (): ImagePipe => chain(ImagePipe._create(gradientH(16, 16)))
 
     _setGpuBackend(null) // no GPU at all
     const cpuOnly = await make()._render()
@@ -108,13 +108,13 @@ describe('gpu fallback', () => {
 
   test('fallback applies batched ops in the original order', async () => {
     _setGpuBackend({ run: () => null })
-    const viaFailingGpu = await TinctImage._create(solid(2, 2, [100, 150, 200, 255]))
+    const viaFailingGpu = await ImagePipe._create(solid(2, 2, [100, 150, 200, 255]))
       .adjust({ brightness: 0.2 })
       .apply(invert())
       ._render()
 
     _setGpuBackend(null)
-    const viaCpu = await TinctImage._create(solid(2, 2, [100, 150, 200, 255]))
+    const viaCpu = await ImagePipe._create(solid(2, 2, [100, 150, 200, 255]))
       .adjust({ brightness: 0.2 })
       .apply(invert())
       ._render()
@@ -124,7 +124,7 @@ describe('gpu fallback', () => {
 
   test('in Node the auto-detected backend is null and rendering still works', async () => {
     // No override: getGpuBackend() probes the real environment.
-    const out = await TinctImage._create(solid(2, 2, [10, 20, 30, 255]))
+    const out = await ImagePipe._create(solid(2, 2, [10, 20, 30, 255]))
       .apply(invert())
       ._render()
     expect(out.data[0]).toBe(245)

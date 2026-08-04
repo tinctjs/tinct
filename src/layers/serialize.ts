@@ -16,7 +16,7 @@
 import { bytesToBase64 } from '../core/base64'
 import { isDeferred, type PixelData } from '../core/pixel'
 import type { CanvasState } from './document'
-import type { TinctLayer } from './layer'
+import type { PipeLayer } from './layer'
 import type { SerializedDocument, SerializedLayer, SerializedSource } from './types'
 
 /** @internal The document serialization format version. */
@@ -24,11 +24,11 @@ export const DOCUMENT_VERSION = 2
 
 /**
  * @internal
- * Serialize a canvas and its stack. Called by {@link TinctDocument.toJSON}.
+ * Serialize a canvas and its stack. Called by {@link PipeDocument.toJSON}.
  */
 export function serializeDocument(
   canvas: CanvasState,
-  layers: readonly TinctLayer[],
+  layers: readonly PipeLayer[],
 ): SerializedDocument {
   const ids = new Map<PixelData, string>()
   const sources: Record<string, SerializedSource> = {}
@@ -37,7 +37,7 @@ export function serializeDocument(
     const source = layer.source._source
     if (isDeferred(source)) {
       throw new Error(
-        'tinct: cannot serialize a layer whose source is a flattened document — render it to pixels first, e.g. tinct.load(await inner.flatten().toBlob())',
+        'imagepipe: cannot serialize a layer whose source is a flattened document — render it to pixels first, e.g. imagepipe.load(await inner.flatten().toBlob())',
       )
     }
     let id = ids.get(source)

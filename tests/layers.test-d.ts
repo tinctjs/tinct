@@ -1,43 +1,43 @@
 /**
- * API contract type tests for `tinctjs/layers`: the overloaded accessors
+ * API contract type tests for `imagepipe/layers`: the overloaded accessors
  * read one type and derive another, references are name-or-index, and the
  * serialized envelope is pinned to version 2.
  */
 import { describe, expectTypeOf, test } from 'vitest'
-import type { TinctImage } from '../src/index'
-import { document, fromJSON, layer, TinctDocument, TinctLayer } from '../src/layers'
+import type { ImagePipe } from '../src/index'
+import { document, fromJSON, layer, PipeDocument, PipeLayer } from '../src/layers'
 import type { BlendMode, LayerBounds, LayerPlacement, SerializedDocument } from '../src/layers'
 
-declare const image: TinctImage
-declare const doc: TinctDocument
-declare const one: TinctLayer
+declare const image: ImagePipe
+declare const doc: PipeDocument
+declare const one: PipeLayer
 
 describe('construction', () => {
   test('document() requires a size and accepts an optional background', () => {
     expectTypeOf(document).toBeCallableWith({ width: 10, height: 10 })
     expectTypeOf(document).toBeCallableWith({ width: 10, height: 10, background: '#fff' })
-    expectTypeOf(document({ width: 1, height: 1 })).toEqualTypeOf<TinctDocument>()
-    expectTypeOf(layer(image)).toEqualTypeOf<TinctLayer>()
+    expectTypeOf(document({ width: 1, height: 1 })).toEqualTypeOf<PipeDocument>()
+    expectTypeOf(layer(image)).toEqualTypeOf<PipeLayer>()
   })
 
   test('a layer source is a pipeline, not raw pixels', () => {
-    expectTypeOf(layer).parameter(0).toEqualTypeOf<TinctImage>()
-    expectTypeOf(one.source).toEqualTypeOf<TinctImage>()
+    expectTypeOf(layer).parameter(0).toEqualTypeOf<ImagePipe>()
+    expectTypeOf(one.source).toEqualTypeOf<ImagePipe>()
   })
 })
 
 describe('layer accessors', () => {
   test('reading returns the value; setting returns a new layer', () => {
     expectTypeOf(one.at()).toEqualTypeOf<LayerPlacement>()
-    expectTypeOf(one.at(1, 2)).toEqualTypeOf<TinctLayer>()
+    expectTypeOf(one.at(1, 2)).toEqualTypeOf<PipeLayer>()
     expectTypeOf(one.opacity()).toEqualTypeOf<number>()
-    expectTypeOf(one.opacity(0.5)).toEqualTypeOf<TinctLayer>()
+    expectTypeOf(one.opacity(0.5)).toEqualTypeOf<PipeLayer>()
     expectTypeOf(one.blend()).toEqualTypeOf<BlendMode>()
-    expectTypeOf(one.blend('multiply')).toEqualTypeOf<TinctLayer>()
+    expectTypeOf(one.blend('multiply')).toEqualTypeOf<PipeLayer>()
     expectTypeOf(one.visible()).toEqualTypeOf<boolean>()
-    expectTypeOf(one.visible(false)).toEqualTypeOf<TinctLayer>()
+    expectTypeOf(one.visible(false)).toEqualTypeOf<PipeLayer>()
     expectTypeOf(one.name()).toEqualTypeOf<string | undefined>()
-    expectTypeOf(one.name('a')).toEqualTypeOf<TinctLayer>()
+    expectTypeOf(one.name('a')).toEqualTypeOf<PipeLayer>()
   })
 
   test('geometry readers are plain numbers', () => {
@@ -59,12 +59,12 @@ describe('layer accessors', () => {
 
 describe('document operations', () => {
   test('every mutation returns a new document', () => {
-    expectTypeOf(doc.add(one)).toEqualTypeOf<TinctDocument>()
-    expectTypeOf(doc.insert(0, one)).toEqualTypeOf<TinctDocument>()
-    expectTypeOf(doc.remove('a')).toEqualTypeOf<TinctDocument>()
-    expectTypeOf(doc.update(0, (l) => l.opacity(1))).toEqualTypeOf<TinctDocument>()
-    expectTypeOf(doc.move('a', { dx: 1 })).toEqualTypeOf<TinctDocument>()
-    expectTypeOf(doc.reorder(1, 0)).toEqualTypeOf<TinctDocument>()
+    expectTypeOf(doc.add(one)).toEqualTypeOf<PipeDocument>()
+    expectTypeOf(doc.insert(0, one)).toEqualTypeOf<PipeDocument>()
+    expectTypeOf(doc.remove('a')).toEqualTypeOf<PipeDocument>()
+    expectTypeOf(doc.update(0, (l) => l.opacity(1))).toEqualTypeOf<PipeDocument>()
+    expectTypeOf(doc.move('a', { dx: 1 })).toEqualTypeOf<PipeDocument>()
+    expectTypeOf(doc.reorder(1, 0)).toEqualTypeOf<PipeDocument>()
   })
 
   test('layers are addressed by name or index', () => {
@@ -80,13 +80,13 @@ describe('document operations', () => {
   })
 
   test('flatten is synchronous and hit testing is not', () => {
-    expectTypeOf(doc.flatten()).toEqualTypeOf<TinctImage>()
-    expectTypeOf(doc.layerAt(0, 0)).resolves.toEqualTypeOf<TinctLayer | null>()
+    expectTypeOf(doc.flatten()).toEqualTypeOf<ImagePipe>()
+    expectTypeOf(doc.layerAt(0, 0)).resolves.toEqualTypeOf<PipeLayer | null>()
     expectTypeOf(doc.layerAt).toBeCallableWith(0, 0, { signal: AbortSignal.abort() })
   })
 
   test('the stack is exposed read-only', () => {
-    expectTypeOf(doc.layers).toEqualTypeOf<readonly TinctLayer[]>()
+    expectTypeOf(doc.layers).toEqualTypeOf<readonly PipeLayer[]>()
   })
 })
 
@@ -95,7 +95,7 @@ describe('serialization', () => {
     expectTypeOf(doc.toJSON()).toEqualTypeOf<SerializedDocument>()
     expectTypeOf(doc.toJSON().version).toEqualTypeOf<2>()
     expectTypeOf(fromJSON).parameter(0).toEqualTypeOf<SerializedDocument>()
-    expectTypeOf(fromJSON(doc.toJSON())).toEqualTypeOf<TinctDocument>()
+    expectTypeOf(fromJSON(doc.toJSON())).toEqualTypeOf<PipeDocument>()
   })
 
   test('nothing in the public surface is any', () => {

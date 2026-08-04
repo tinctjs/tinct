@@ -1,15 +1,15 @@
-# Layers: multi-image documents (`tinctjs/layers`)
+# Layers: multi-image documents (`imagepipe/layers`)
 
-Design for [issue #8](https://github.com/tinctjs/tinct/issues/8). Approved 2026-07-31.
+Design for [issue #8](https://github.com/imagepipe/imagepipe/issues/8). Approved 2026-07-31.
 
 ## Goal
 
 Ship the model and the math for multi-image documents — collage makers, meme
 tools, thumbnail builders, template renderers — without shipping any
-interaction. UIs own the mouse; Tinct owns the pixels, the ordering, and the
+interaction. UIs own the mouse; imagepipe owns the pixels, the ordering, and the
 two primitives a selection UI needs (`layerAt`, `boundsOf`).
 
-Every layer's content is a full Tinct pipeline, so all existing filters,
+Every layer's content is a full imagepipe pipeline, so all existing filters,
 adjustments, and geometry work per layer for free.
 
 ## Non-goals (P1)
@@ -28,8 +28,8 @@ adjustments, and geometry work per layer for free.
 
 ```
 src/layers/index.ts       public entry: document, layer, fromJSON, types
-src/layers/layer.ts       TinctLayer + layer()
-src/layers/document.ts    TinctDocument + document()
+src/layers/layer.ts       PipeLayer + layer()
+src/layers/document.ts    PipeDocument + document()
 src/layers/composite.ts   flatten pass + per-layer render cache
 src/layers/serialize.ts   toJSON / fromJSON, shared sources table
 src/cpu/blend.ts          separable blend kernels (imported only by layers)
@@ -42,14 +42,14 @@ exist. Importing nothing from `/layers` costs zero bytes.
 
 Three changes, all layers-agnostic:
 
-1. **Deferred sources.** `TinctImage._create` accepts either `PixelData` or a
+1. **Deferred sources.** `ImagePipe._create` accepts either `PixelData` or a
    `DeferredSource` — `{ width, height, resolve(signal): Promise<PixelData> }`.
    `_render` resolves it once and memoizes; `width`/`height` stay synchronous
    arithmetic because the deferred descriptor carries its dimensions. This is
-   what lets `doc.flatten()` return a `TinctImage` synchronously and reuse the
+   what lets `doc.flatten()` return a `ImagePipe` synchronously and reuse the
    entire output surface (`toBlob`, `toDataURL`, `toImageData`, `toCanvas`,
    progress, abort) plus further chaining.
-2. **`_source` internal getter** on `TinctImage`, so serialization can reach
+2. **`_source` internal getter** on `ImagePipe`, so serialization can reach
    the pixels behind a layer.
 3. **`compositeOver` gains an optional blend function**, defaulting to normal.
    With `B(Cb, Cs) = Cs` the general formula reduces to the current one, so
@@ -58,7 +58,7 @@ Three changes, all layers-agnostic:
 ## Public API
 
 ```ts
-import { document, layer, fromJSON } from 'tinctjs/layers'
+import { document, layer, fromJSON } from 'imagepipe/layers'
 
 const doc = document({ width: 1080, height: 1350, background: '#ffffff' })
   .add(layer(photo).at(0, 0))
@@ -74,7 +74,7 @@ const moved = doc.move('sticker', { dx: 20, dy: -10 })
 const blob = await doc.flatten().toBlob({ format: 'webp' })
 ```
 
-### `TinctLayer` (immutable)
+### `PipeLayer` (immutable)
 
 Accessors are overloaded: no argument reads, one argument returns a new layer.
 
@@ -90,26 +90,26 @@ Accessors are overloaded: no argument reads, one argument returns a new layer.
 
 Blend modes in P1: `source-over`, `multiply`, `screen`, `darken`, `lighten`.
 
-### `TinctDocument` (immutable)
+### `PipeDocument` (immutable)
 
 Fixed canvas size, background color, ordered layer list. Every mutation
 returns a new document with structural sharing — untouched layers keep object
 identity, so undo/redo is keeping references.
 
-| Member                                    | Meaning                                              |
-| ----------------------------------------- | ---------------------------------------------------- |
-| `add(layer)`                              | Append on top                                        |
-| `insert(index, layer)`                    | Insert at a stack position                           |
-| `remove(ref)`                             | Remove by name or index                              |
-| `update(ref, fn)`                         | Replace a layer with `fn(layer)`                     |
-| `move(ref, { dx, dy })`                   | Translate                                            |
-| `reorder(ref, index)`                     | Change stack position                                |
-| `boundsOf(ref)`                           | `{ x, y, width, height }` — synchronous              |
-| `layerAt(x, y)`                           | `Promise<TinctLayer \| null>`, top-most, alpha-aware |
-| `flatten()`                               | `TinctImage`                                         |
-| `toJSON()`                                | `SerializedDocument`                                 |
-| `on('progress', fn)`                      | Same event surface as `TinctImage`                   |
-| `width`, `height`, `background`, `layers` | Read-only                                            |
+| Member                                    | Meaning                                             |
+| ----------------------------------------- | --------------------------------------------------- |
+| `add(layer)`                              | Append on top                                       |
+| `insert(index, layer)`                    | Insert at a stack position                          |
+| `remove(ref)`                             | Remove by name or index                             |
+| `update(ref, fn)`                         | Replace a layer with `fn(layer)`                    |
+| `move(ref, { dx, dy })`                   | Translate                                           |
+| `reorder(ref, index)`                     | Change stack position                               |
+| `boundsOf(ref)`                           | `{ x, y, width, height }` — synchronous             |
+| `layerAt(x, y)`                           | `Promise<PipeLayer \| null>`, top-most, alpha-aware |
+| `flatten()`                               | `ImagePipe`                                         |
+| `toJSON()`                                | `SerializedDocument`                                |
+| `on('progress', fn)`                      | Same event surface as `ImagePipe`                   |
+| `width`, `height`, `background`, `layers` | Read-only                                           |
 
 A reference (`ref`) is `string | number` — a layer name or a stack index.
 An unknown name throws a descriptive error.
@@ -144,17 +144,17 @@ document's listener channel.
 
 ## Dirty-layer rendering
 
-A `WeakMap<TinctImage, PixelData>` is created by `document()` and passed by
+A `WeakMap<ImagePipe, PixelData>` is created by `document()` and passed by
 reference into every derived document, exactly as `RenderCache` and the
-listener channel are shared across a `TinctImage` chain.
+listener channel are shared across a `ImagePipe` chain.
 
 Because layers are immutable and mutations preserve object identity, this
 gives precise dirty-layer semantics for free:
 
 - Moving, re-blending, reordering, or hiding a layer keeps the same
-  `TinctImage` → cache hit → lower layers' pipelines never re-run, only the
+  `ImagePipe` → cache hit → lower layers' pipelines never re-run, only the
   composite loop repeats.
-- Editing a layer's pipeline yields a new `TinctImage` → miss → only that
+- Editing a layer's pipeline yields a new `ImagePipe` → miss → only that
   layer re-renders, and its own `RenderCache` makes even that incremental.
 
 This is verified by a test that counts filter-kernel invocations, not by
@@ -186,7 +186,7 @@ asserting intent.
 - Sources dedupe by **`PixelData` identity**, not a content hash. The same
   loaded image used across layers serializes once, at zero hashing cost.
 - Layer ops are the layer pipeline's `history().ops`.
-- `fromJSON` rebuilds one `TinctImage` per source (with a shared
+- `fromJSON` rebuilds one `ImagePipe` per source (with a shared
   `RenderCache`) and pipes the ops back. It rejects versions it does not
   understand; the existing `pipe()` already rejects a v2 envelope cleanly.
 - `toJSON()` also makes `JSON.stringify(doc)` work.
@@ -196,7 +196,7 @@ asserting intent.
 
 ## Budgets
 
-- `tinctjs/layers` ≤ 4 kB brotli for its own code. `size-limit` bundles
+- `imagepipe/layers` ≤ 4 kB brotli for its own code. `size-limit` bundles
   transitively, so the new entry's limit is the measured core baseline plus
   4 kB, with the derivation named in the entry.
 - The existing core entry proves the core bundle is unchanged.

@@ -56,7 +56,7 @@ export function encodeThumbHash(pixels: PixelData): Uint8Array {
   const { width: w, height: h, data } = pixels
   if (w > 100 || h > 100) {
     throw new Error(
-      `tinct: thumbhash input must be at most 100x100 (got ${String(w)}x${String(h)})`,
+      `imagepipe: thumbhash input must be at most 100x100 (got ${String(w)}x${String(h)})`,
     )
   }
 

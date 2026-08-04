@@ -1,14 +1,14 @@
 /**
- * Tinct playground — a manual test bed exercising every v0.1 operation
- * through the public package API (`tinctjs` / `tinctjs/filters`).
+ * imagepipe playground — a manual test bed exercising every v0.1 operation
+ * through the public package API (`imagepipe` / `imagepipe/filters`).
  */
 import {
-  tinct,
-  type TinctImage,
+  imagepipe,
+  type ImagePipe,
   type SerializedHistory,
   type Gravity,
   type ResizeKernel,
-} from 'tinctjs'
+} from 'imagepipe'
 import {
   grayscale,
   sepia,
@@ -20,8 +20,8 @@ import {
   duotone,
   noise,
   posterize,
-} from 'tinctjs/filters'
-import { enableFaceGravity } from 'tinctjs/face'
+} from 'imagepipe/filters'
+import { enableFaceGravity } from 'imagepipe/face'
 
 enableFaceGravity()
 
@@ -50,12 +50,12 @@ const state = {
 
 const defaults = JSON.parse(JSON.stringify(state)) as typeof state
 
-let original: TinctImage | null = null
+let original: ImagePipe | null = null
 let detachProgress: (() => void) | null = null
 
 /* ------------------------------- pipeline --------------------------------- */
 
-function buildPipeline(image: TinctImage): TinctImage {
+function buildPipeline(image: ImagePipe): ImagePipe {
   let p = image
   if (state.crop.enabled)
     p = p.crop({ aspect: state.crop.aspect as `${number}:${number}`, gravity: state.crop.gravity })
@@ -131,7 +131,7 @@ async function render(): Promise<void> {
 
 async function loadSource(source: File | HTMLCanvasElement): Promise<void> {
   detachProgress?.()
-  original = await tinct.load(source)
+  original = await imagepipe.load(source)
   detachProgress = original.on('progress', ({ pct }) => {
     progressBar.value = pct
   })
@@ -523,7 +523,7 @@ function buildPanels(): void {
 /* --------------------------------- wiring --------------------------------- */
 
 function showCapabilities(): void {
-  const caps = tinct.capabilities()
+  const caps = imagepipe.capabilities()
   const host = $('capabilities')
   host.replaceChildren(
     ...Object.entries(caps).map(([name, on]) => {
@@ -596,7 +596,7 @@ function wire(): void {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `tinct-export.${format === 'jpeg' ? 'jpg' : format}`
+      a.download = `imagepipe-export.${format === 'jpeg' ? 'jpg' : format}`
       a.click()
       URL.revokeObjectURL(url)
     })()

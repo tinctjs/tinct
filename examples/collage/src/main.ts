@@ -1,7 +1,7 @@
 /**
- * Collage — a Tinct example.
+ * Collage — a imagepipe example.
  *
- * A layered document editor built on `tinctjs/layers`. It exists to exercise
+ * A layered document editor built on `imagepipe/layers`. It exists to exercise
  * the two primitives a selection UI needs and that the library deliberately
  * does not wrap in one: `layerAt()` to pick the layer under the pointer, and
  * `boundsOf()` to draw the selection.
@@ -15,8 +15,8 @@
  * Everything else falls out of immutability: undo is an array of document
  * references, save is `JSON.stringify`.
  */
-import { tinct, type Filter, type ImageSource, type TinctImage } from 'tinctjs'
-import { blur, grayscale, posterize, sepia } from 'tinctjs/filters'
+import { imagepipe, type Filter, type ImageSource, type ImagePipe } from 'imagepipe'
+import { blur, grayscale, posterize, sepia } from 'imagepipe/filters'
 // `document` is also a DOM global, so the layers factory is imported under a
 // local alias. `layer`, `fromJSON`, and the types come through unrenamed.
 import {
@@ -25,9 +25,9 @@ import {
   layer,
   type BlendMode,
   type SerializedDocument,
-  type TinctDocument,
-  type TinctLayer,
-} from 'tinctjs/layers'
+  type PipeDocument,
+  type PipeLayer,
+} from 'imagepipe/layers'
 
 const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement
 const stage = $('stage')
@@ -63,7 +63,7 @@ const FILTERS: Record<FilterName, (() => Filter) | null> = {
  * returns new layer objects, so object identity is not a stable key, but a
  * name survives moves, restacks, and a JSON round trip.
  */
-const bases = new Map<string, { source: TinctImage; filter: FilterName }>()
+const bases = new Map<string, { source: ImagePipe; filter: FilterName }>()
 let sequence = 0
 
 let doc = tinctDocument(CANVAS)
@@ -71,10 +71,10 @@ let selected: string | null = null
 
 // Undo/redo, in full. Documents share structure, so a history entry costs a
 // pointer — the layers nobody touched are the same objects in every entry.
-let history: TinctDocument[] = [doc]
+let history: PipeDocument[] = [doc]
 let cursor = 0
 
-function commit(next: TinctDocument): void {
+function commit(next: PipeDocument): void {
   history = [...history.slice(0, cursor + 1), next]
   cursor = history.length - 1
   apply(next)
@@ -89,7 +89,7 @@ function redo(): void {
 }
 
 /** Adopt a document without touching history — used by undo/redo and drags. */
-function apply(next: TinctDocument): void {
+function apply(next: PipeDocument): void {
   doc = next
   if (selected !== null && !names(doc).includes(selected)) selected = null
   renderPanel()
@@ -97,7 +97,7 @@ function apply(next: TinctDocument): void {
   schedule()
 }
 
-function names(target: TinctDocument): string[] {
+function names(target: PipeDocument): string[] {
   return target.layers.map((l) => l.name() ?? '')
 }
 
@@ -178,7 +178,7 @@ stage.addEventListener('pointerdown', (e) => {
   // layers come from the cache the last composite filled, so after the first
   // frame this is a lookup. Clicking the hole in a ring selects what is behind
   // it, which a bounding-box test would get wrong.
-  void doc.layerAt(x, y).then((hit: TinctLayer | null) => {
+  void doc.layerAt(x, y).then((hit: PipeLayer | null) => {
     const name = hit?.name() ?? null
     selected = name
     renderPanel()
@@ -314,7 +314,7 @@ filterSelect.addEventListener('change', () => {
  * the layer and carrying its state across. (Worth noting as API feedback: this
  * is the one edit that does not have a one-liner.)
  */
-function withSource(l: TinctLayer, source: TinctImage): TinctLayer {
+function withSource(l: PipeLayer, source: ImagePipe): PipeLayer {
   return layer(source)
     .at(l.x, l.y)
     .opacity(l.opacity())
@@ -326,7 +326,7 @@ function withSource(l: TinctLayer, source: TinctImage): TinctLayer {
 /* ------------------------------------------------------------ adding layers */
 
 async function addImage(source: ImageSource, label: string, x: number, y: number): Promise<void> {
-  const image = await tinct.load(source)
+  const image = await imagepipe.load(source)
   const scaled = image.width > MAX_LAYER_WIDTH ? image.resize({ width: MAX_LAYER_WIDTH }) : image
   const name = `${label} ${String(++sequence)}`
   bases.set(name, { source: scaled, filter: 'none' })
@@ -402,7 +402,7 @@ $('load').addEventListener('click', () => {
         commit(restored)
         say(`restored ${String(restored.layers.length)} layers from JSON`)
       } catch (error) {
-        say(error instanceof Error ? error.message : 'that is not a Tinct document')
+        say(error instanceof Error ? error.message : 'that is not a imagepipe document')
       }
     },
     () => say('clipboard read was blocked — allow it, or paste over the page'),
@@ -412,7 +412,7 @@ $('load').addEventListener('click', () => {
 $('export').addEventListener('click', () => {
   void (async () => {
     say('encoding…')
-    // A flattened document is an ordinary TinctImage: chain onto it like any
+    // A flattened document is an ordinary ImagePipe: chain onto it like any
     // other pipeline. Both outputs share the layer cache, so the second
     // flatten only re-runs the blend loop.
     const flat = doc.flatten()

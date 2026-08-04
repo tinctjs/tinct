@@ -1,4 +1,7 @@
-# tinctjs
+# imagepipe
+
+> Versions up to 0.2.0 were published as `tinctjs`; the package was renamed
+> to `imagepipe` in 0.3.0. History below is continuous.
 
 ## 0.2.0
 
