@@ -1,0 +1,217 @@
+/**
+ * Booth — an imagepipe example.
+ *
+ * The pitch in one line: the serialized recipe that edits a photo runs on
+ * live video unchanged. `live(video).pipe(recipe).into(canvas)` renders the
+ * webcam through WebGL2 fragment passes per frame (no readback), recipes
+ * hot-swap mid-stream, and the 📸 button replays the *same JSON* through the
+ * still pipeline at full camera resolution — one recipe, still or live.
+ *
+ * No camera (or permission declined)? An animated canvas scene steps in:
+ * live sessions accept canvas sources too.
+ */
+import { imagepipe, type AdjustOptions, type SerializedHistory, type SerializedOp } from 'imagepipe'
+import { live, type LiveSession, type LiveSource } from 'imagepipe/live'
+// The registry rule: a filter's code ships iff it is imported *and used* —
+// the presets below are built from these factories, which both registers
+// the filters and keeps them in the bundle.
+import { blur, duotone, grayscale, pixelate, posterize, sepia, vignette } from 'imagepipe/filters'
+
+/** Serialize a configured filter into its history op. */
+const use = (filter: { name: string; options: object }): SerializedOp =>
+  ({ op: 'filter', params: { name: filter.name, options: filter.options } }) as SerializedOp
+const adjust = (params: AdjustOptions): SerializedOp => ({ op: 'adjust', params })
+
+/**
+ * Live-safe presets: `adjust` plus filters that ship a fragment shader.
+ * (A recipe with `curves` or geometry ops would throw at `pipe()` — live
+ * pipelines are color-only, validated up front.)
+ */
+const PRESETS: Record<string, SerializedHistory> = {
+  Original: { version: 1, ops: [] },
+  'Golden Hour': {
+    version: 1,
+    ops: [
+      adjust({ temperature: 0.4, saturation: 0.15, gamma: 0.95 }),
+      use(vignette({ amount: 0.3, radius: 0.7, color: '#000000' })),
+    ],
+  },
+  Noir: {
+    version: 1,
+    ops: [
+      adjust({ contrast: 0.18 }),
+      use(grayscale({ amount: 1 })),
+      use(vignette({ amount: 0.45, radius: 0.6, color: '#000000' })),
+    ],
+  },
+  Cyanotype: {
+    version: 1,
+    ops: [use(duotone({ shadows: '#0b2545', highlights: '#e8f1f2' }))],
+  },
+  Seventies: {
+    version: 1,
+    ops: [
+      use(sepia({ amount: 0.55 })),
+      adjust({ contrast: -0.08, temperature: 0.2 }),
+      use(vignette({ amount: 0.35, radius: 0.75, color: '#1a0e00' })),
+    ],
+  },
+  'Pop Art': {
+    version: 1,
+    ops: [adjust({ saturation: 0.5 }), use(posterize({ levels: 5 }))],
+  },
+  Dream: {
+    version: 1,
+    ops: [
+      use(blur({ radius: 2 })),
+      adjust({ brightness: 0.08, temperature: 0.12, saturation: -0.1 }),
+    ],
+  },
+  Arcade: {
+    version: 1,
+    ops: [use(pixelate({ size: 9 })), adjust({ saturation: 0.3, contrast: 0.1 })],
+  },
+}
+
+const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement
+const view = $('view') as HTMLCanvasElement
+const looksRow = $('looks')
+const note = $('note')
+const strip = $('strip')
+
+let session: LiveSession | null = null
+let source: LiveSource | null = null
+let usingCamera = false
+let activeName = 'Golden Hour'
+
+/** Animated fallback scene — also demos live canvas sources. */
+function demoScene(): HTMLCanvasElement {
+  const canvas = document.createElement('canvas')
+  canvas.width = 960
+  canvas.height = 540
+  const ctx = canvas.getContext('2d')!
+  const balls = Array.from({ length: 7 }, (_, i) => ({
+    x: 120 + i * 110,
+    y: 140 + (i % 3) * 120,
+    vx: 1.6 + (i % 4) * 0.7,
+    vy: 1.1 + (i % 3) * 0.9,
+    r: 34 + (i % 3) * 22,
+    hue: [26, 204, 350, 46, 168, 288, 12][i]!,
+  }))
+  const draw = (): void => {
+    const sky = ctx.createLinearGradient(0, 0, 0, 540)
+    sky.addColorStop(0, '#243b55')
+    sky.addColorStop(1, '#141e30')
+    ctx.fillStyle = sky
+    ctx.fillRect(0, 0, 960, 540)
+    for (const b of balls) {
+      b.x += b.vx
+      b.y += b.vy
+      if (b.x < b.r || b.x > 960 - b.r) b.vx *= -1
+      if (b.y < b.r || b.y > 540 - b.r) b.vy *= -1
+      ctx.fillStyle = `hsl(${b.hue} 70% 60%)`
+      ctx.beginPath()
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2)
+      ctx.fill()
+    }
+    requestAnimationFrame(draw)
+  }
+  draw()
+  return canvas
+}
+
+async function cameraSource(): Promise<HTMLVideoElement> {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+    audio: false,
+  })
+  const video = document.createElement('video')
+  video.srcObject = stream
+  video.muted = true
+  video.playsInline = true
+  await video.play()
+  return video
+}
+
+function selectPreset(name: string): void {
+  activeName = name
+  session?.update(PRESETS[name]!)
+  for (const el of looksRow.children) el.classList.toggle('active', el.id === `look-${name}`)
+}
+
+function buildChips(): void {
+  for (const name of Object.keys(PRESETS)) {
+    const chip = document.createElement('button')
+    chip.className = 'chip'
+    chip.id = `look-${name}`
+    chip.textContent = name
+    chip.addEventListener('click', () => {
+      selectPreset(name)
+    })
+    looksRow.append(chip)
+  }
+}
+
+/** Full-resolution still of the current frame, through the *same* recipe. */
+async function snap(): Promise<void> {
+  if (!source) return
+  // Freeze the frame: draw the source onto a plain canvas at native size.
+  const current = source
+  const width = current instanceof HTMLVideoElement ? current.videoWidth : current.width
+  const height = current instanceof HTMLVideoElement ? current.videoHeight : current.height
+  if (!width || !height) return
+  const frame = document.createElement('canvas')
+  frame.width = width
+  frame.height = height
+  const ctx = frame.getContext('2d')!
+  if (usingCamera) {
+    // Match the mirrored preview so the photo is what you saw.
+    ctx.translate(width, 0)
+    ctx.scale(-1, 1)
+  }
+  ctx.drawImage(source as CanvasImageSource, 0, 0)
+
+  // Same JSON, still pipeline: load → pipe(recipe) → encode.
+  const image = await imagepipe.load(frame)
+  const blob = await image.pipe(PRESETS[activeName]!).toBlob({ format: 'webp', quality: 0.92 })
+
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `booth-${activeName.toLowerCase().replace(/\s+/g, '-')}.webp`
+  const img = document.createElement('img')
+  img.src = link.href
+  img.alt = `Snapshot with the ${activeName} preset`
+  link.append(img)
+  strip.prepend(link)
+}
+
+async function start(): Promise<void> {
+  buildChips()
+  try {
+    source = await cameraSource()
+    usingCamera = true
+    view.classList.add('mirrored')
+    note.textContent = 'Live from your camera — nothing leaves this page. Swap looks mid-stream.'
+  } catch {
+    source = demoScene()
+    note.textContent = 'No camera, so an animated canvas is the live source — same API either way.'
+  }
+
+  session = live(source).pipe(PRESETS[activeName]!).into(view)
+  selectPreset(activeName)
+
+  const mode = $('mode')
+  const fps = $('fps')
+  setInterval(() => {
+    if (!session) return
+    const stats = session.stats
+    mode.textContent = stats.mode === 'gpu' ? 'GPU · texture-resident' : 'CPU fallback'
+    fps.textContent = String(stats.fps)
+  }, 500)
+}
+
+$('snap').addEventListener('click', () => {
+  void snap()
+})
+
+void start()
