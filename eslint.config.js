@@ -50,6 +50,7 @@ export default tseslint.config(
       'src/face/**',
       'src/hash/**',
       'src/palette/**',
+      'src/batch/**',
       'src/core/executor.ts',
       'src/core/editor.ts',
       'src/core/render-cache.ts',
