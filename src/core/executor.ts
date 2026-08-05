@@ -42,7 +42,7 @@ export type OpNode = SerializedOp & {
 export type ProgressFn = (pct: number, op: string) => void
 
 /** @internal One op's GPU passes paired with its CPU equivalent for fallback. */
-interface QueuedPass {
+export interface QueuedPass {
   passes: GpuPass[]
   cpu: (pixels: PixelData) => PixelData
 }
@@ -131,8 +131,12 @@ function yieldToEventLoop(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
-/** Ops the GPU can take: adjustments, and filters that ship shaders. */
-function toGpuPass(node: OpNode): QueuedPass | null {
+/**
+ * @internal
+ * Ops the GPU can take: adjustments, and filters that ship shaders. Also the
+ * seam live sessions use to compile a recipe into passes + CPU twins.
+ */
+export function toGpuPass(node: OpNode): QueuedPass | null {
   if (node.op === 'adjust') {
     const params = node.params
     return {
