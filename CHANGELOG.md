@@ -1,5 +1,13 @@
 # imagepipe
 
+## 0.6.0
+
+### Minor Changes
+
+- 16e8df5: `imagepipe/effects`: geometry-aware filters built for tracked, per-frame use. `warp` applies up to four radial displacement zones (bulge to magnify, pinch to slim) with smooth quadratic falloff; `sticker` composites pixels at a normalized anchor with scale, rotation, and opacity, serialized inline like `overlay`. Both take plain-JSON geometry, replay from histories exactly, and run in live pipelines — they are the render half of landmark-tracked face effects.
+- 63b6ff5: Filter shaders can now declare auxiliary input textures and bilinear source sampling. `defineFilter` gains `textures` (bound as `uniform sampler2D <name>` on units 1..N — sticker pixels, lookup tables) and `linearSource` (sample `u_image` bilinearly, for coordinate-warping filters). Supported on both the offscreen GPU backend and live sessions, where auxiliary textures are uploaded once and cached across frames.
+- a1cde08: `imagepipe/track`: landmark tracking for live sessions via a pluggable `LandmarkProvider` — the seam between face-landmark models and imagepipe's render path. The library ships no model: wrap MediaPipe, TensorFlow.js, or your own detector in a provider function, and `trackFace(session, provider, recipe)` runs it at a fixed cadence, smooths the landmarks (EMA), and hot-swaps the rebuilt recipe into the session. Recipes always carry concrete coordinates, so tracked frames snapshot and replay exactly. Includes `faceRoll` for tilt-following stickers, and `LiveSession` now exposes its `source`.
+
 ## 0.5.0
 
 ### Minor Changes
