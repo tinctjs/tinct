@@ -59,6 +59,12 @@
     "limit": "10 kB"
   },
   {
+    "name": "track: landmark tracking loop",
+    "path": "dist/track/index.js",
+    "import": "{ trackFace }",
+    "limit": "2 kB"
+  },
+  {
     "name": "effects: warp + sticker",
     "path": "dist/effects/index.js",
     "import": "{ warp, sticker }",

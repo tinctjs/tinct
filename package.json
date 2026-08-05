@@ -73,6 +73,10 @@
     "./palette": {
       "types": "./dist/palette/index.d.ts",
       "import": "./dist/palette/index.js"
+    },
+    "./track": {
+      "types": "./dist/track/index.d.ts",
+      "import": "./dist/track/index.js"
     }
   },
   "main": "./dist/index.js",
