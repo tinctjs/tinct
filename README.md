@@ -151,6 +151,26 @@ references — and layer pixels are cached per pipeline, so dragging,
 reordering, or changing a layer's opacity re-runs only the composite pass,
 never the layers below. UIs own the mouse; imagepipe owns the model and the math.
 
+### Batch processing
+
+```ts
+import { batch } from 'imagepipe/batch'
+
+const results = await batch(files, { concurrency: 4 })
+  .pipe(storedRecipe) // any serialized history — or .map((img) => img.resize(...))
+  .toBlobs({ format: 'webp', maxBytes: 300_000 })
+
+for (const r of results) {
+  if (r.ok) upload(r.value)
+  else console.warn(`item ${r.index} failed:`, r.error)
+}
+```
+
+One recipe over many images with bounded concurrency, per-item failure
+isolation (a broken file never sinks the batch), aggregate `progress`
+events, and whole-batch cancellation via `signal`. Ships as its own
+tree-shaken entry (`imagepipe/batch`, ~1 kB).
+
 ### Face-aware cropping
 
 ```ts
