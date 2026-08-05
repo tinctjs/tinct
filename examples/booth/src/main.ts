@@ -12,6 +12,9 @@
  */
 import { imagepipe, type AdjustOptions, type SerializedHistory, type SerializedOp } from 'imagepipe'
 import { live, type LiveSession, type LiveSource } from 'imagepipe/live'
+import { trackFace, type LandmarkProvider, type TrackHandle } from 'imagepipe/track'
+import { FACE_FX, mirrorFace } from './facefx'
+import { createFaceProvider } from './landmarks'
 // The registry rule: a filter's code ships iff it is imported *and used* —
 // the presets below are built from these factories, which both registers
 // the filters and keeps them in the bundle.
@@ -81,6 +84,7 @@ const PRESETS: Record<string, SerializedHistory> = {
 const $ = (id: string): HTMLElement => document.getElementById(id) as HTMLElement
 const view = $('view') as HTMLCanvasElement
 const looksRow = $('looks')
+const fxRow = $('facefx')
 const note = $('note')
 const strip = $('strip')
 
@@ -88,6 +92,9 @@ let session: LiveSession | null = null
 let source: LiveSource | null = null
 let usingCamera = false
 let activeName = 'Comic'
+let provider: LandmarkProvider | null = null
+let tracking: TrackHandle | null = null
+let activeFx: string | null = null
 
 /** Animated fallback scene — also demos live canvas sources. */
 function demoScene(): HTMLCanvasElement {
@@ -138,10 +145,76 @@ async function cameraSource(): Promise<HTMLVideoElement> {
   return video
 }
 
+/** The full current recipe: active color look + active tracked effect. */
+function trackedRecipe(face: Parameters<(typeof FACE_FX)[string]>[0] | null): SerializedHistory {
+  const base = PRESETS[activeName]!.ops
+  if (!face || !activeFx) return { version: 1, ops: [...base] }
+  return { version: 1, ops: [...base, ...FACE_FX[activeFx]!(face)] }
+}
+
 function selectPreset(name: string): void {
   activeName = name
-  session?.update(PRESETS[name]!)
+  // With tracking active the next tick re-applies look + fx together.
+  if (!tracking) session?.update(PRESETS[name]!)
   for (const el of looksRow.children) el.classList.toggle('active', el.id === `look-${name}`)
+}
+
+function selectFx(name: string | null): void {
+  activeFx = name
+  for (const el of fxRow.children) {
+    el.classList.toggle('active', el.id === `fx-${name ?? ''}`)
+  }
+  if (!name) {
+    tracking?.stop()
+    tracking = null
+    session?.update(PRESETS[activeName]!)
+    return
+  }
+  if (!tracking && session && provider) {
+    tracking = trackFace(session, provider, trackedRecipe, {
+      hz: 24,
+      smoothing: 0.45,
+      onError: () => {
+        note.textContent = 'Face detection hiccuped — still trying.'
+      },
+    })
+  }
+}
+
+async function enableFaceFx(video: HTMLVideoElement): Promise<void> {
+  note.textContent = 'Loading the face model (~3 MB, first visit only)…'
+  try {
+    provider = await createFaceProvider(video)
+  } catch {
+    note.textContent = 'Face FX unavailable — the landmark model failed to load.'
+    return
+  }
+  buildFxChips()
+  fxRow.hidden = false
+  note.textContent =
+    'Live from your camera — nothing leaves this page. Combine a look with a face effect.'
+}
+
+function buildFxChips(): void {
+  const off = document.createElement('button')
+  off.className = 'chip'
+  off.id = 'fx-'
+  off.textContent = 'Off'
+  off.classList.add('active')
+  off.addEventListener('click', () => {
+    selectFx(null)
+  })
+  fxRow.append(off)
+  for (const name of Object.keys(FACE_FX)) {
+    const chip = document.createElement('button')
+    chip.className = 'chip'
+    chip.id = `fx-${name}`
+    chip.textContent = name
+    chip.addEventListener('click', () => {
+      selectFx(name)
+    })
+    fxRow.append(chip)
+  }
 }
 
 function buildChips(): void {
@@ -176,9 +249,13 @@ async function snap(): Promise<void> {
   }
   ctx.drawImage(source as CanvasImageSource, 0, 0)
 
-  // Same JSON, still pipeline: load → pipe(recipe) → encode.
+  // Same JSON, still pipeline: load → pipe(recipe) → encode. Tracked
+  // effects bake the current landmarks in — mirrored to match the
+  // mirrored preview — so the photo is exactly what you saw.
+  const face = tracking?.latest ?? null
+  const recipe = trackedRecipe(face && usingCamera ? mirrorFace(face) : face)
   const image = await imagepipe.load(frame)
-  const blob = await image.pipe(PRESETS[activeName]!).toBlob({ format: 'webp', quality: 0.92 })
+  const blob = await image.pipe(recipe).toBlob({ format: 'webp', quality: 0.92 })
 
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
@@ -197,6 +274,7 @@ async function start(): Promise<void> {
     usingCamera = true
     view.classList.add('mirrored')
     note.textContent = 'Live from your camera — nothing leaves this page. Swap looks mid-stream.'
+    void enableFaceFx(source)
   } catch {
     source = demoScene()
     note.textContent = 'No camera, so an animated canvas is the live source — same API either way.'
