@@ -183,6 +183,11 @@ export class LiveSession {
     return session
   }
 
+  /** The source this session renders from (for analyzers and trackers). */
+  get source(): LiveSource {
+    return this.#source
+  }
+
   /** Session health: rendering path, trailing-second fps, total frames. */
   get stats(): LiveStats {
     const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
