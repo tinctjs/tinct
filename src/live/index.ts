@@ -72,7 +72,9 @@ function scheduleFrames(source: LiveSource, callback: () => void): CancelFrames 
       handle = video.requestVideoFrameCallback(tick)
     }
     handle = video.requestVideoFrameCallback(tick)
-    return () => { video.cancelVideoFrameCallback(handle); }
+    return () => {
+      video.cancelVideoFrameCallback(handle)
+    }
   }
   if (typeof requestAnimationFrame === 'function') {
     let handle = 0
@@ -81,7 +83,9 @@ function scheduleFrames(source: LiveSource, callback: () => void): CancelFrames 
       handle = requestAnimationFrame(tick)
     }
     handle = requestAnimationFrame(tick)
-    return () => { cancelAnimationFrame(handle); }
+    return () => {
+      cancelAnimationFrame(handle)
+    }
   }
   throw new Error('imagepipe: no frame scheduler available in this environment')
 }
@@ -206,7 +210,9 @@ export class LiveSession {
   resume(): void {
     if (this.#stopped) throw new Error('imagepipe: live session is stopped')
     if (this.#cancel) return
-    this.#cancel = scheduleFrames(this.#source, () => { this.#frame(); })
+    this.#cancel = scheduleFrames(this.#source, () => {
+      this.#frame()
+    })
     this.#frame()
   }
 
@@ -225,12 +231,7 @@ export class LiveSession {
       this.#canvas.width = width
       this.#canvas.height = height
     }
-    const drawn = this.#renderer.render(
-      this.#source,
-      width,
-      height,
-      this.#plan,
-    )
+    const drawn = this.#renderer.render(this.#source, width, height, this.#plan)
     // A failed frame is dropped, not fatal: the renderer handles its own
     // degradation (CPU twins for broken shaders, rebuild on context restore).
     if (!drawn) return

@@ -147,7 +147,9 @@ function createGlRenderer(canvas: HTMLCanvasElement): LiveRenderer | null {
 
   // Allow restoration after a context loss, and rebuild everything when it
   // arrives — programs and textures do not survive the round trip.
-  const onLost = (event: Event): void => { event.preventDefault(); }
+  const onLost = (event: Event): void => {
+    event.preventDefault()
+  }
   const onRestored = (): void => {
     resources = createResources()
   }
@@ -299,11 +301,7 @@ function createCpu2dRenderer(canvas: HTMLCanvasElement): LiveRenderer | null {
     mode: 'cpu',
     render(source, width, height, plan) {
       const pixels = scratch.grab(source, width, height, plan)
-      target.putImageData(
-        new ImageData(new Uint8ClampedArray(pixels.data), width, height),
-        0,
-        0,
-      )
+      target.putImageData(new ImageData(new Uint8ClampedArray(pixels.data), width, height), 0, 0)
       return true
     },
     dispose() {
