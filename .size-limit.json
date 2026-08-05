@@ -53,9 +53,9 @@
     "limit": "13 kB"
   },
   {
-    "name": "batch",
+    "name": "batch (baseline + its own ~0.3 kB)",
     "path": "dist/batch/index.js",
     "import": "{ batch }",
-    "limit": "2 kB"
+    "limit": "10 kB"
   }
 ]
