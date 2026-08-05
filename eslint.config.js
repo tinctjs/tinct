@@ -51,6 +51,7 @@ export default tseslint.config(
       'src/hash/**',
       'src/palette/**',
       'src/batch/**',
+      'src/effects/**',
       'src/live/**',
       'src/core/executor.ts',
       'src/core/editor.ts',

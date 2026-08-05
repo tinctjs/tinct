@@ -59,6 +59,12 @@
     "limit": "10 kB"
   },
   {
+    "name": "effects: warp + sticker",
+    "path": "dist/effects/index.js",
+    "import": "{ warp, sticker }",
+    "limit": "4 kB"
+  },
+  {
     "name": "live (session + renderers + executor kernels, no editor)",
     "path": "dist/live/index.js",
     "import": "{ live }",
