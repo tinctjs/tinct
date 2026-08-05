@@ -6,109 +6,89 @@
  * let users trade — and `image.pipe(preset)` replays them identically on
  * any device.
  */
-import { imagepipe, type SerializedHistory, type ImagePipe } from 'imagepipe'
-// Importing a filter is what makes its serialized ops replayable — the
-// registry rule: code ships iff imported.
+import {
+  imagepipe,
+  type AdjustOptions,
+  type SerializedHistory,
+  type SerializedOp,
+  type ImagePipe,
+} from 'imagepipe'
+// The registry rule: a filter's code ships iff it is imported *and used*.
+// The presets are built from these factories — that registers the filters
+// and keeps them in the bundle (a bare `void curves` reference is a pure
+// expression bundlers are free to drop, along with the import).
 import { curves, duotone, grayscale, noise, vignette } from 'imagepipe/filters'
 
-;(void curves, void duotone, void grayscale, void noise, void vignette)
+/** Serialize a configured filter into its history op. */
+const use = (filter: { name: string; options: object }): SerializedOp =>
+  ({ op: 'filter', params: { name: filter.name, options: filter.options } }) as SerializedOp
+const adjust = (params: AdjustOptions): SerializedOp => ({ op: 'adjust', params })
 
 const PRESETS: Record<string, SerializedHistory> = {
   Original: { version: 1, ops: [] },
   'Golden Hour': {
     version: 1,
     ops: [
-      { op: 'adjust', params: { temperature: 0.4, saturation: 0.15, gamma: 0.95 } },
-      {
-        op: 'filter',
-        params: {
-          name: 'curves',
-          options: {
-            rgb: [
-              [0, 18],
-              [130, 142],
-              [255, 248],
-            ],
-          },
-        },
-      },
-      {
-        op: 'filter',
-        params: { name: 'vignette', options: { amount: 0.3, radius: 0.7, color: '#000000' } },
-      },
+      adjust({ temperature: 0.4, saturation: 0.15, gamma: 0.95 }),
+      use(
+        curves({
+          rgb: [
+            [0, 18],
+            [130, 142],
+            [255, 248],
+          ],
+        }),
+      ),
+      use(vignette({ amount: 0.3, radius: 0.7, color: '#000000' })),
     ],
   },
   'Faded Film': {
     version: 1,
     ops: [
-      { op: 'adjust', params: { contrast: -0.12, saturation: -0.2, tint: 0.12 } },
-      {
-        op: 'filter',
-        params: {
-          name: 'curves',
-          options: {
-            rgb: [
-              [0, 34],
-              [128, 132],
-              [255, 236],
-            ],
-          },
-        },
-      },
-      {
-        op: 'filter',
-        params: { name: 'noise', options: { amount: 0.05, monochrome: true, seed: 7 } },
-      },
+      adjust({ contrast: -0.12, saturation: -0.2, tint: 0.12 }),
+      use(
+        curves({
+          rgb: [
+            [0, 34],
+            [128, 132],
+            [255, 236],
+          ],
+        }),
+      ),
+      use(noise({ amount: 0.05, monochrome: true, seed: 7 })),
     ],
   },
   'Silver Gelatin': {
     version: 1,
     ops: [
-      { op: 'filter', params: { name: 'grayscale', options: { amount: 1 } } },
-      {
-        op: 'filter',
-        params: {
-          name: 'curves',
-          options: {
-            rgb: [
-              [0, 8],
-              [96, 74],
-              [190, 214],
-              [255, 252],
-            ],
-          },
-        },
-      },
-      {
-        op: 'filter',
-        params: { name: 'noise', options: { amount: 0.07, monochrome: true, seed: 3 } },
-      },
-      {
-        op: 'filter',
-        params: { name: 'vignette', options: { amount: 0.4, radius: 0.6, color: '#000000' } },
-      },
+      use(grayscale({ amount: 1 })),
+      use(
+        curves({
+          rgb: [
+            [0, 8],
+            [96, 74],
+            [190, 214],
+            [255, 252],
+          ],
+        }),
+      ),
+      use(noise({ amount: 0.07, monochrome: true, seed: 3 })),
+      use(vignette({ amount: 0.4, radius: 0.6, color: '#000000' })),
     ],
   },
   Cyanotype: {
     version: 1,
     ops: [
-      {
-        op: 'filter',
-        params: { name: 'duotone', options: { shadows: '#0b2545', highlights: '#e8f1f2' } },
-      },
-      {
-        op: 'filter',
-        params: {
-          name: 'curves',
-          options: {
-            rgb: [
-              [0, 12],
-              [128, 120],
-              [255, 250],
-            ],
-          },
-        },
-      },
+      use(duotone({ shadows: '#0b2545', highlights: '#e8f1f2' })),
+      use(
+        curves({
+          rgb: [
+            [0, 12],
+            [128, 120],
+            [255, 250],
+          ],
+        }),
+      ),
     ],
   },
 }
