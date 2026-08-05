@@ -41,13 +41,17 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./filters": {
-      "types": "./dist/filters/index.d.ts",
-      "import": "./dist/filters/index.js"
+    "./batch": {
+      "types": "./dist/batch/index.d.ts",
+      "import": "./dist/batch/index.js"
     },
     "./face": {
       "types": "./dist/face/index.d.ts",
       "import": "./dist/face/index.js"
+    },
+    "./filters": {
+      "types": "./dist/filters/index.d.ts",
+      "import": "./dist/filters/index.js"
     },
     "./hash": {
       "types": "./dist/hash/index.d.ts",

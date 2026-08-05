@@ -5,6 +5,7 @@ export default defineConfig({
     index: 'src/index.ts',
     'filters/index': 'src/filters/index.ts',
     'face/index': 'src/face/index.ts',
+    'batch/index': 'src/batch/index.ts',
     'hash/index': 'src/hash/index.ts',
     'layers/index': 'src/layers/index.ts',
     'palette/index': 'src/palette/index.ts',

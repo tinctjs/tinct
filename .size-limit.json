@@ -51,5 +51,11 @@
     "path": "dist/layers/index.js",
     "import": "{ document, layer, fromJSON }",
     "limit": "13 kB"
+  },
+  {
+    "name": "batch",
+    "path": "dist/batch/index.js",
+    "import": "{ batch }",
+    "limit": "2 kB"
   }
 ]
