@@ -57,5 +57,11 @@
     "path": "dist/batch/index.js",
     "import": "{ batch }",
     "limit": "10 kB"
+  },
+  {
+    "name": "live (session + renderers + executor kernels, no editor)",
+    "path": "dist/live/index.js",
+    "import": "{ live }",
+    "limit": "5 kB"
   }
 ]

@@ -171,6 +171,32 @@ isolation (a broken file never sinks the batch), aggregate `progress`
 events, and whole-batch cancellation via `signal`. Ships as its own
 tree-shaken entry (`imagepipe/batch`, ~1 kB).
 
+### Live pipelines
+
+```ts
+import { live } from 'imagepipe/live'
+
+const session = live(video) // an HTMLVideoElement (camera, playback) or canvas
+  .pipe(storedRecipe) // the same serialized history your photo editor saved
+  .into(canvas) // starts rendering, per frame, in real time
+
+session.update(otherRecipe) // hot-swap the look mid-stream
+session.stats // { mode: 'gpu', fps: 60, frames: 1834 }
+session.stop()
+```
+
+The recipe that edits a photo, batches an upload, or styles a preset runs
+on live video unchanged. Rendering is **texture-resident**: each frame is
+uploaded once, the recipe's fragment shaders run through ping-pong
+framebuffers, and the last pass draws straight to the visible canvas — no
+pixel readback, which is what makes 60 fps possible. Machines without
+WebGL2 fall back to the same CPU kernels at a lower frame rate with
+identical output, verified by the cross-path parity suite.
+
+Live recipes are color-only: `adjust` plus any filter that ships a
+fragment shader (grayscale, sepia, duotone, blur, vignette, …). Geometry
+ops throw a descriptive error up front — at `pipe()`, not per frame.
+
 ### Face-aware cropping
 
 ```ts
@@ -248,6 +274,7 @@ Enforced budgets in CI via [size-limit](https://github.com/ai/size-limit):
 | All filters together                  | ≤ 10 kB      | ~3 kB             |
 | `imagepipe/face`, `/hash`, `/palette` | ≤ 2 kB each  | 1.2–1.6 kB        |
 | `imagepipe/layers` (own code)         | ≤ 4 kB       | ~1.6 kB           |
+| `imagepipe/live`                      | ≤ 5 kB       | ~3.9 kB           |
 
 `imagepipe/layers` is measured as a delta: the size-limit config carries the
 core baseline it builds on and the layers entry at baseline + 4 kB, so the

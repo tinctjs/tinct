@@ -61,6 +61,10 @@
       "types": "./dist/layers/index.d.ts",
       "import": "./dist/layers/index.js"
     },
+    "./live": {
+      "types": "./dist/live/index.d.ts",
+      "import": "./dist/live/index.js"
+    },
     "./package.json": "./package.json",
     "./palette": {
       "types": "./dist/palette/index.d.ts",
