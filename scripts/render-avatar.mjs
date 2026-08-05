@@ -1,5 +1,5 @@
-// Rasterize the imagepipe mark ("The Dip", assets/logo.svg) to assets/logo-512.png
-// for the GitHub org avatar — zero dependencies, in the spirit of the library:
+// Rasterize the imagepipe mark ("The Bore", assets/logo.svg) to
+// assets/logo-512.png for the GitHub/npm org avatars — zero dependencies:
 // the mark is redrawn with pixel math (4× supersampled) and encoded with a
 // minimal PNG writer over node:zlib.
 //
@@ -14,50 +14,25 @@ const scale = S / 96 // the SVG viewBox is 96×96
 
 // --- the mark, as pixel math ------------------------------------------------
 
-const FRAME = { x: 12 * scale, y: 12 * scale, w: 72 * scale, h: 72 * scale, r: 18 * scale }
-const INK = [0x1c, 0x1a, 0x33]
-const STOPS = [
-  [0, [0x4f, 0x46, 0xe5]],
-  [0.55, [0xc0, 0x26, 0xd3]],
-  [1, [0xec, 0x48, 0x99]],
-]
+const BLOCK = { x: 14 * scale, y: 14 * scale, w: 68 * scale, h: 68 * scale, r: 17 * scale }
+const BORE = { cx: 58 * scale, cy: 48 * scale, r: 16 * scale }
+const AMBER = [0xf0, 0x78, 0x18]
 
-function insideFrame(x, y) {
-  const { x: fx, y: fy, w, h, r } = FRAME
-  if (x < fx || y < fy || x > fx + w || y > fy + h) return false
-  const cx = Math.max(fx + r, Math.min(fx + w - r, x))
-  const cy = Math.max(fy + r, Math.min(fy + h - r, y))
+function insideBlock(x, y) {
+  const { x: bx, y: by, w, h, r } = BLOCK
+  if (x < bx || y < by || x > bx + w || y > by + h) return false
+  const cx = Math.max(bx + r, Math.min(bx + w - r, x))
+  const cy = Math.max(by + r, Math.min(by + h - r, y))
   return (x - cx) ** 2 + (y - cy) ** 2 <= r * r
 }
 
-// The meniscus: M8 56 Q20 48 32 56 T56 56 … — a smooth wave around y=56 with
-// half-period 12 and amplitude 4 (quadratic chain ≈ sine).
-function waveY(x) {
-  const u = x / scale
-  // Crest at u=20, trough at u=44 — one full period every 48 units, matching
-  // the Q/T chain in assets/logo.svg.
-  return (56 - 4 * Math.sin(((u - 8) / 48) * 2 * Math.PI)) * scale
-}
-
-function dyeColor(y) {
-  // Gradient over the dye path's bounding box: y from 48 (top) to 96 (bottom),
-  // with stop 0 at the bottom.
-  const t = Math.max(0, Math.min(1, (96 * scale - y) / (48 * scale)))
-  for (let i = 1; i < STOPS.length; i++) {
-    const [t0, c0] = STOPS[i - 1]
-    const [t1, c1] = STOPS[i]
-    if (t <= t1) {
-      const k = (t - t0) / (t1 - t0)
-      return [0, 1, 2].map((c) => c0[c] + (c1[c] - c0[c]) * k)
-    }
-  }
-  return STOPS[STOPS.length - 1][1]
+function insideBore(x, y) {
+  return (x - BORE.cx) ** 2 + (y - BORE.cy) ** 2 <= BORE.r * BORE.r
 }
 
 function samplePixel(x, y) {
-  if (!insideFrame(x, y)) return [0, 0, 0, 0]
-  if (y >= waveY(x)) return [...dyeColor(y), 255]
-  return [...INK, 255]
+  if (!insideBlock(x, y) || insideBore(x, y)) return [0, 0, 0, 0]
+  return [...AMBER, 255]
 }
 
 // --- render supersampled, box-filter down ----------------------------------

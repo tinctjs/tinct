@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="./assets/logo-dark-mode.svg">
-    <img src="./assets/logo.svg" alt="imagepipe" width="96" height="96">
-  </picture>
+  <img src="./assets/logo.svg" alt="imagepipe" width="96" height="96">
 </p>
 
 # imagepipe

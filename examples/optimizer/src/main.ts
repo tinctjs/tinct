@@ -22,34 +22,22 @@ const fileInput = $('file') as HTMLInputElement
 
 let batch: AbortController | null = null
 
-/** The imagepipe dip mark, drawn locally, used as the demo watermark. */
+/** The imagepipe mark ("The Bore"), drawn locally, used as the demo watermark. */
 function watermark(): ImageData {
   const c = document.createElement('canvas')
   c.width = c.height = 72
   const ctx = c.getContext('2d')!
-  ctx.fillStyle = 'rgba(28, 26, 51, 0.9)'
+  // Amber image block… (geometry mirrors assets/logo.svg at 72/96 scale)
+  ctx.fillStyle = '#f07818'
   ctx.beginPath()
-  ctx.roundRect(4, 4, 64, 64, 16)
+  ctx.roundRect(10, 10, 52, 52, 13)
   ctx.fill()
-  const dye = ctx.createLinearGradient(0, 68, 0, 30)
-  dye.addColorStop(0, '#4f46e5')
-  dye.addColorStop(0.55, '#c026d3')
-  dye.addColorStop(1, '#ec4899')
-  ctx.fillStyle = dye
+  // …with the pipe bored through it: the hole is real transparency, so the
+  // watermark lets the photo show through the bore.
+  ctx.globalCompositeOperation = 'destination-out'
   ctx.beginPath()
-  ctx.moveTo(4, 42)
-  for (let x = 4; x <= 68; x++) {
-    ctx.lineTo(x, 42 - 3 * Math.sin(((x - 4) / 32) * Math.PI * 2))
-  }
-  ctx.lineTo(68, 68)
-  ctx.lineTo(4, 68)
-  ctx.closePath()
-  ctx.save()
-  ctx.clip()
-  ctx.beginPath()
-  ctx.roundRect(4, 4, 64, 64, 16)
+  ctx.arc(43, 36, 12, 0, Math.PI * 2)
   ctx.fill()
-  ctx.restore()
   return ctx.getImageData(0, 0, 72, 72)
 }
 
