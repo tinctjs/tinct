@@ -1,5 +1,5 @@
 /**
- * Booth's FX pack — five custom filters defined *in the app* with
+ * Booth's FX pack — six custom filters defined *in the app* with
  * `defineFilter`, each a single GLSL fragment pass plus a CPU fallback.
  *
  * This is the extensibility story in practice: a filter defined here is a
@@ -328,5 +328,122 @@ void main() {
       data[i + 2] = lo[2]! + (hi[2]! - lo[2]!) * f
     }
     return pixels
+  },
+})
+
+/* ------------------------------------------------------------------ */
+/* Beautify — skin-masked bilateral smoothing                          */
+/*                                                                     */
+/* The classic camera-app beauty filter, honestly: a 9×9 bilateral     */
+/* blur (spatial × color-range gaussian) that melts skin texture but   */
+/* not edges, gated by the same YCbCr skin box the face module uses    */
+/* for `gravity: 'face'` — so eyes, hair, and the background keep      */
+/* their detail while skin gets the smoothing.                         */
+/* ------------------------------------------------------------------ */
+
+export const beautify = defineFilter<{ amount?: number; smoothing?: number }>({
+  name: 'booth-beautify',
+  fragment: `#version 300 es
+precision highp float;
+uniform sampler2D u_image;
+uniform vec2 u_resolution;
+uniform float u_amount;
+uniform float u_range;
+in vec2 v_texCoord;
+out vec4 outColor;
+float skinMask(vec3 c) {
+  float y = dot(c, vec3(0.299, 0.587, 0.114));
+  float cb = 0.5 + 0.564 * (c.b - y);
+  float cr = 0.5 + 0.713 * (c.r - y);
+  return smoothstep(0.29, 0.32, cb) * (1.0 - smoothstep(0.49, 0.52, cb)) *
+    smoothstep(0.51, 0.53, cr) * (1.0 - smoothstep(0.67, 0.69, cr)) *
+    smoothstep(0.12, 0.2, y);
+}
+void main() {
+  vec4 center = texture(u_image, v_texCoord);
+  vec3 sum = vec3(0.0);
+  float wsum = 0.0;
+  for (int dy = -4; dy <= 4; dy++) {
+    for (int dx = -4; dx <= 4; dx++) {
+      vec2 uv = clamp(v_texCoord + vec2(float(dx), float(dy)) / u_resolution, 0.0, 1.0);
+      vec3 s = texture(u_image, uv).rgb;
+      float ws = exp(-float(dx * dx + dy * dy) / 18.0);
+      vec3 d = s - center.rgb;
+      float wr = exp(-dot(d, d) / (2.0 * u_range * u_range));
+      float w = ws * wr;
+      sum += s * w;
+      wsum += w;
+    }
+  }
+  vec3 smoothed = sum / wsum;
+  float mask = skinMask(center.rgb) * u_amount;
+  vec3 result = mix(center.rgb, smoothed, mask);
+  result += mask * 0.06 * (1.0 - result);
+  outColor = vec4(result, center.a);
+}
+`,
+  uniforms: ({ amount, smoothing }) => ({
+    u_amount: amount ?? 0.85,
+    u_range: smoothing ?? 0.1,
+  }),
+  fallback: (pixels, { amount = 0.85, smoothing = 0.1 }) => {
+    const { width, height, data } = pixels
+    const out = new Uint8ClampedArray(data.length)
+    const mask = (r: number, g: number, b: number): number => {
+      const y = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+      const cb = 0.5 + 0.564 * (b / 255 - y)
+      const cr = 0.5 + 0.713 * (r / 255 - y)
+      return (
+        smoothstep(0.29, 0.32, cb) *
+        (1 - smoothstep(0.49, 0.52, cb)) *
+        smoothstep(0.51, 0.53, cr) *
+        (1 - smoothstep(0.67, 0.69, cr)) *
+        smoothstep(0.12, 0.2, y)
+      )
+    }
+    const range = 2 * smoothing * smoothing
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4
+        const cr0 = data[i]! / 255
+        const cg0 = data[i + 1]! / 255
+        const cb0 = data[i + 2]! / 255
+        let sr = 0
+        let sg = 0
+        let sb = 0
+        let wsum = 0
+        for (let dy = -4; dy <= 4; dy++) {
+          const sy = Math.min(height - 1, Math.max(0, y + dy))
+          for (let dx = -4; dx <= 4; dx++) {
+            const sx = Math.min(width - 1, Math.max(0, x + dx))
+            const j = (sy * width + sx) * 4
+            const r = data[j]! / 255
+            const g = data[j + 1]! / 255
+            const b = data[j + 2]! / 255
+            const dr = r - cr0
+            const dg = g - cg0
+            const db = b - cb0
+            const w =
+              Math.exp(-(dx * dx + dy * dy) / 18) * Math.exp(-(dr * dr + dg * dg + db * db) / range)
+            sr += r * w
+            sg += g * w
+            sb += b * w
+            wsum += w
+          }
+        }
+        const m = mask(data[i]!, data[i + 1]!, data[i + 2]!) * amount
+        let r = cr0 + (sr / wsum - cr0) * m
+        let g = cg0 + (sg / wsum - cg0) * m
+        let b = cb0 + (sb / wsum - cb0) * m
+        r += m * 0.06 * (1 - r)
+        g += m * 0.06 * (1 - g)
+        b += m * 0.06 * (1 - b)
+        out[i] = r * 255
+        out[i + 1] = g * 255
+        out[i + 2] = b * 255
+        out[i + 3] = data[i + 3]!
+      }
+    }
+    return { width, height, data: out }
   },
 })

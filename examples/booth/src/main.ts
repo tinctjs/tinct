@@ -18,7 +18,7 @@ import { live, type LiveSession, type LiveSource } from 'imagepipe/live'
 import { grayscale, pixelate, posterize, vignette } from 'imagepipe/filters'
 // The headliners: custom shader filters defined in this app (see fx.ts).
 // `defineFilter` + a fragment shader is all it takes to run live.
-import { crt, halftone, kaleido, neon, thermal } from './fx'
+import { beautify, crt, halftone, kaleido, neon, thermal } from './fx'
 
 /** Serialize a configured filter into its history op. */
 const use = (filter: { name: string; options: object }): SerializedOp =>
@@ -32,6 +32,10 @@ const adjust = (params: AdjustOptions): SerializedOp => ({ op: 'adjust', params 
  */
 const PRESETS: Record<string, SerializedHistory> = {
   Original: { version: 1, ops: [] },
+  Beautify: {
+    version: 1,
+    ops: [use(beautify({ amount: 0.85 })), adjust({ brightness: 0.03, temperature: 0.05 })],
+  },
   Comic: {
     version: 1,
     ops: [adjust({ contrast: 0.15 }), use(halftone({ size: 10 }))],
