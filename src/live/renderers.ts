@@ -110,6 +110,9 @@ function createGlRenderer(canvas: HTMLCanvasElement): LiveRenderer | null {
     ping: WebGLTexture
     pong: WebGLTexture
     allocated: { width: number; height: number }
+    /** Auxiliary textures uploaded once per pixel buffer (stickers, LUTs). */
+    aux: WeakMap<PixelData, WebGLTexture>
+    auxList: WebGLTexture[]
   }
 
   const createTexture = (): WebGLTexture => {
@@ -136,6 +139,8 @@ function createGlRenderer(canvas: HTMLCanvasElement): LiveRenderer | null {
       ping: createTexture(),
       pong: createTexture(),
       allocated: { width: 0, height: 0 },
+      aux: new WeakMap(),
+      auxList: [],
     }
   }
 
@@ -176,20 +181,56 @@ function createGlRenderer(canvas: HTMLCanvasElement): LiveRenderer | null {
     r.allocated = { width, height }
   }
 
+  /** Upload-once cache for auxiliary textures, keyed by the pixel buffer. */
+  const getAuxTexture = (pixels: PixelData, linear: boolean): WebGLTexture => {
+    const r = resources!
+    const cached = r.aux.get(pixels)
+    if (cached) return cached
+    const texture = createTexture()
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA8,
+      pixels.width,
+      pixels.height,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array(pixels.data.buffer, pixels.data.byteOffset, pixels.data.byteLength),
+    )
+    if (linear) {
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    }
+    r.aux.set(pixels, texture)
+    r.auxList.push(texture)
+    return texture
+  }
+
   const draw = (
     program: WebGLProgram,
     input: WebGLTexture,
-    uniforms: GpuPass['uniforms'],
+    pass: Pick<GpuPass, 'uniforms' | 'textures' | 'linearSource'>,
     width: number,
     height: number,
   ): void => {
     gl.useProgram(program)
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, input)
+    const filter = pass.linearSource ? gl.LINEAR : gl.NEAREST
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
     gl.uniform1i(gl.getUniformLocation(program, 'u_image'), 0)
+    for (let unit = 0; unit < (pass.textures?.length ?? 0); unit++) {
+      const aux = pass.textures![unit]!
+      gl.activeTexture(gl.TEXTURE1 + unit)
+      gl.bindTexture(gl.TEXTURE_2D, getAuxTexture(aux.pixels, aux.linear ?? false))
+      gl.uniform1i(gl.getUniformLocation(program, aux.name), 1 + unit)
+    }
+    gl.activeTexture(gl.TEXTURE0)
     const resolution = gl.getUniformLocation(program, 'u_resolution')
     if (resolution) gl.uniform2f(resolution, width, height)
-    setUniforms(gl, program, uniforms)
+    setUniforms(gl, program, pass.uniforms)
     drawFullscreen(gl, program)
   }
 
@@ -210,7 +251,7 @@ function createGlRenderer(canvas: HTMLCanvasElement): LiveRenderer | null {
       new Uint8Array(pixels.data.buffer, pixels.data.byteOffset, pixels.data.byteLength),
     )
     gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-    draw(program, resources!.sourceTexture, {}, width, height)
+    draw(program, resources!.sourceTexture, { uniforms: {} }, width, height)
     return gl.getError() === gl.NO_ERROR
   }
 
@@ -242,6 +283,13 @@ function createGlRenderer(canvas: HTMLCanvasElement): LiveRenderer | null {
         const passes: readonly GpuPass[] = plan.passes.length
           ? plan.passes
           : [{ fragment: COPY_FRAGMENT, uniforms: {} }]
+        for (const pass of passes) {
+          for (const aux of pass.textures ?? []) {
+            if (aux.pixels.width > maxTextureSize || aux.pixels.height > maxTextureSize) {
+              return false
+            }
+          }
+        }
 
         // Compile everything first so a broken pass falls back before any
         // half-rendered state reaches the screen.
@@ -267,7 +315,7 @@ function createGlRenderer(canvas: HTMLCanvasElement): LiveRenderer | null {
             gl.bindFramebuffer(gl.FRAMEBUFFER, resources.fbo)
             gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target, 0)
           }
-          draw(programs[i]!, input, passes[i]!.uniforms, width, height)
+          draw(programs[i]!, input, passes[i]!, width, height)
           if (!last) input = input === resources.ping ? resources.pong : resources.ping
         }
         lastMode = 'gpu'
@@ -284,7 +332,9 @@ function createGlRenderer(canvas: HTMLCanvasElement): LiveRenderer | null {
       if (!r) return
       gl.bindFramebuffer(gl.FRAMEBUFFER, null)
       gl.deleteFramebuffer(r.fbo)
-      for (const texture of [r.sourceTexture, r.ping, r.pong]) gl.deleteTexture(texture)
+      for (const texture of [r.sourceTexture, r.ping, r.pong, ...r.auxList]) {
+        gl.deleteTexture(texture)
+      }
       for (const program of r.programs.values()) gl.deleteProgram(program)
       r.programs.clear()
       resources = null
