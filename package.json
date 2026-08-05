@@ -45,6 +45,10 @@
       "types": "./dist/batch/index.d.ts",
       "import": "./dist/batch/index.js"
     },
+    "./effects": {
+      "types": "./dist/effects/index.d.ts",
+      "import": "./dist/effects/index.js"
+    },
     "./face": {
       "types": "./dist/face/index.d.ts",
       "import": "./dist/face/index.js"
