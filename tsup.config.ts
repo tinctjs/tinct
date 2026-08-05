@@ -11,6 +11,7 @@ export default defineConfig({
     'layers/index': 'src/layers/index.ts',
     'live/index': 'src/live/index.ts',
     'palette/index': 'src/palette/index.ts',
+    'track/index': 'src/track/index.ts',
     // Emitted next to index.js so `new URL('./render-worker.js', import.meta.url)`
     // resolves both when served raw and through bundlers' worker handling.
     'render-worker': 'src/core/render-worker.ts',

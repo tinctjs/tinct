@@ -197,6 +197,53 @@ Live recipes are color-only: `adjust` plus any filter that ships a
 fragment shader (grayscale, sepia, duotone, blur, vignette, …). Geometry
 ops throw a descriptive error up front — at `pipe()`, not per frame.
 
+### Tracked face effects
+
+```ts
+import { live } from 'imagepipe/live'
+import { trackFace } from 'imagepipe/track'
+import { warp, sticker, stickerSource } from 'imagepipe/effects'
+
+const session = live(video).into(canvas)
+const crown = stickerSource(crownPixels)
+
+trackFace(session, myLandmarkProvider, (face) => {
+  if (!face) return { version: 1, ops: [] }
+  const bigEyes = warp({
+    zones: [face.leftEye, face.rightEye].map((eye) => ({
+      center: eye,
+      radius: face.box[2] * 0.18,
+      strength: 0.35,
+    })),
+  })
+  const hat = sticker({
+    source: crown,
+    at: [face.box[0] + face.box[2] / 2, face.box[1]],
+    width: face.box[2] * 1.2,
+  })
+  return {
+    version: 1,
+    ops: [bigEyes, hat].map((f) => ({
+      op: 'filter' as const,
+      params: { name: f.name, options: f.options },
+    })),
+  }
+})
+```
+
+Three pieces, cleanly split: **`imagepipe/effects`** renders (`warp` —
+radial bulge/pinch zones; `sticker` — anchored, rotated compositing),
+**`imagepipe/track`** runs the loop (fixed-cadence detection, exponential
+smoothing, hot-swapping the rebuilt recipe into the session), and a
+**`LandmarkProvider`** supplies the anchors. imagepipe ships **no landmark
+model** — detection quality is a model problem, rendering speed is ours.
+Wrap MediaPipe Face Landmarker, TensorFlow.js, or your own heuristic in a
+one-function provider and the library does the rest.
+
+Because tracked recipes always carry concrete coordinates, they stay pure
+JSON: snapshot a tracked frame with `history()` and it replays pixel-exact
+anywhere, no model required.
+
 ### Face-aware cropping
 
 ```ts
