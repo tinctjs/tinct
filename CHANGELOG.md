@@ -1,5 +1,11 @@
 # imagepipe
 
+## 0.4.0
+
+### Minor Changes
+
+- 4eb1407: New `imagepipe/batch` entry: process many images with one recipe. `batch(sources).pipe(history)` or `.map(fn)`, bounded concurrency, per-item failure isolation, aggregate progress events, and whole-batch AbortSignal cancellation via `toBlobs`/`toImageDatas`.
+
 ## 0.3.0
 
 ### Minor Changes
