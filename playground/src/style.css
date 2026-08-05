@@ -5,8 +5,8 @@
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
-  background: #14161a;
-  color: #e6e8ec;
+  background: #17150f;
+  color: #f2ede5;
 }
 
 header {
@@ -14,7 +14,7 @@ header {
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1.25rem;
-  border-bottom: 1px solid #262a31;
+  border-bottom: 1px solid #363028;
 }
 
 h1 {
@@ -23,7 +23,7 @@ h1 {
 }
 
 h1 span {
-  color: #7aa2ff;
+  color: #f07818;
   font-weight: 400;
 }
 
@@ -36,13 +36,13 @@ h1 span {
   font-size: 0.72rem;
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid #3a4653;
-  color: #8b95a3;
+  border: 1px solid #4a4234;
+  color: #8f867a;
 }
 
 .badge.on {
-  border-color: #2e7d4f;
-  color: #6fd598;
+  border-color: #8a5a20;
+  color: #f0a45e;
 }
 
 main {
@@ -54,13 +54,13 @@ main {
 #controls {
   overflow-y: auto;
   padding: 1rem;
-  border-right: 1px solid #262a31;
+  border-right: 1px solid #363028;
 }
 
 #controls section,
 #controls details {
   margin-bottom: 1rem;
-  border: 1px solid #262a31;
+  border: 1px solid #363028;
   border-radius: 8px;
   padding: 0.75rem;
 }
@@ -70,7 +70,7 @@ main {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #9aa4b2;
+  color: #a89f92;
   margin: 0 0 0.5rem;
   cursor: pointer;
 }
@@ -79,7 +79,7 @@ label {
   display: block;
   font-size: 0.8rem;
   margin: 0.5rem 0 0.25rem;
-  color: #c2c9d2;
+  color: #cfc6b8;
 }
 
 input[type='range'] {
@@ -90,9 +90,9 @@ select,
 input[type='color'],
 input[type='number'] {
   width: 100%;
-  background: #1d2127;
+  background: #241f17;
   color: inherit;
-  border: 1px solid #333944;
+  border: 1px solid #453c2f;
   border-radius: 4px;
   padding: 0.3rem;
 }
@@ -101,15 +101,15 @@ button {
   margin-top: 0.5rem;
   width: 100%;
   padding: 0.45rem;
-  background: #2b3a55;
-  color: #dbe4ff;
-  border: 1px solid #3c5078;
+  background: #3a2c17;
+  color: #f6e7d4;
+  border: 1px solid #6a4a20;
   border-radius: 6px;
   cursor: pointer;
 }
 
 button:hover {
-  background: #34486b;
+  background: #4a3820;
 }
 
 #stage {
@@ -125,7 +125,7 @@ button:hover {
   gap: 1rem;
   margin-bottom: 0.75rem;
   font-size: 0.8rem;
-  color: #9aa4b2;
+  color: #a89f92;
 }
 
 #progress {
@@ -136,7 +136,7 @@ button:hover {
   flex: 1;
   display: grid;
   place-items: center;
-  background: repeating-conic-gradient(#1b1e24 0% 25%, #22262d 0% 50%) 0 0 / 24px 24px;
+  background: repeating-conic-gradient(#1b1812 0% 25%, #221e16 0% 50%) 0 0 / 24px 24px;
   border-radius: 8px;
   min-height: 0;
 }
@@ -150,13 +150,13 @@ button:hover {
   max-height: 200px;
   overflow: auto;
   font-size: 0.7rem;
-  background: #101215;
+  background: #100e0a;
   padding: 0.5rem;
   border-radius: 6px;
   white-space: pre-wrap;
 }
 
 .value {
-  color: #7aa2ff;
+  color: #f07818;
   font-variant-numeric: tabular-nums;
 }

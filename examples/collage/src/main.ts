@@ -151,7 +151,7 @@ function drawOutline(): void {
   const { x, y, width, height } = doc.boundsOf(selected)
   outlineCtx.setLineDash([7, 5])
   outlineCtx.lineWidth = 2
-  outlineCtx.strokeStyle = '#5b4bd6'
+  outlineCtx.strokeStyle = '#f07818'
   outlineCtx.strokeRect(x + 1, y + 1, width - 2, height - 2)
 }
 
