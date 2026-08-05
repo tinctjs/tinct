@@ -15,7 +15,10 @@ import { live, type LiveSession, type LiveSource } from 'imagepipe/live'
 // The registry rule: a filter's code ships iff it is imported *and used* —
 // the presets below are built from these factories, which both registers
 // the filters and keeps them in the bundle.
-import { blur, duotone, grayscale, pixelate, posterize, sepia, vignette } from 'imagepipe/filters'
+import { grayscale, pixelate, posterize, vignette } from 'imagepipe/filters'
+// The headliners: custom shader filters defined in this app (see fx.ts).
+// `defineFilter` + a fragment shader is all it takes to run live.
+import { crt, halftone, kaleido, neon, thermal } from './fx'
 
 /** Serialize a configured filter into its history op. */
 const use = (filter: { name: string; options: object }): SerializedOp =>
@@ -29,12 +32,29 @@ const adjust = (params: AdjustOptions): SerializedOp => ({ op: 'adjust', params 
  */
 const PRESETS: Record<string, SerializedHistory> = {
   Original: { version: 1, ops: [] },
-  'Golden Hour': {
+  Comic: {
     version: 1,
-    ops: [
-      adjust({ temperature: 0.4, saturation: 0.15, gamma: 0.95 }),
-      use(vignette({ amount: 0.3, radius: 0.7, color: '#000000' })),
-    ],
+    ops: [adjust({ contrast: 0.15 }), use(halftone({ size: 10 }))],
+  },
+  Neon: {
+    version: 1,
+    ops: [use(neon({ color: '#39ff14', boost: 2.2 }))],
+  },
+  CRT: {
+    version: 1,
+    ops: [adjust({ saturation: 0.2 }), use(crt({ curvature: 0.07 }))],
+  },
+  Prism: {
+    version: 1,
+    ops: [use(kaleido({ segments: 6 })), adjust({ saturation: 0.25 })],
+  },
+  Thermal: {
+    version: 1,
+    ops: [use(thermal({}))],
+  },
+  'Neon Rose': {
+    version: 1,
+    ops: [use(neon({ color: '#ff2d78', boost: 2.6 }))],
   },
   Noir: {
     version: 1,
@@ -44,28 +64,9 @@ const PRESETS: Record<string, SerializedHistory> = {
       use(vignette({ amount: 0.45, radius: 0.6, color: '#000000' })),
     ],
   },
-  Cyanotype: {
-    version: 1,
-    ops: [use(duotone({ shadows: '#0b2545', highlights: '#e8f1f2' }))],
-  },
-  Seventies: {
-    version: 1,
-    ops: [
-      use(sepia({ amount: 0.55 })),
-      adjust({ contrast: -0.08, temperature: 0.2 }),
-      use(vignette({ amount: 0.35, radius: 0.75, color: '#1a0e00' })),
-    ],
-  },
   'Pop Art': {
     version: 1,
     ops: [adjust({ saturation: 0.5 }), use(posterize({ levels: 5 }))],
-  },
-  Dream: {
-    version: 1,
-    ops: [
-      use(blur({ radius: 2 })),
-      adjust({ brightness: 0.08, temperature: 0.12, saturation: -0.1 }),
-    ],
   },
   Arcade: {
     version: 1,
@@ -82,7 +83,7 @@ const strip = $('strip')
 let session: LiveSession | null = null
 let source: LiveSource | null = null
 let usingCamera = false
-let activeName = 'Golden Hour'
+let activeName = 'Comic'
 
 /** Animated fallback scene — also demos live canvas sources. */
 function demoScene(): HTMLCanvasElement {
