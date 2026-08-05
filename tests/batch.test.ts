@@ -155,6 +155,39 @@ describe('progress and abort', () => {
   })
 })
 
+describe('run() custom outputs', () => {
+  test('produces multiple artifacts per item from one load', async () => {
+    stubImageData()
+    const results = await batch([source(16, 8)]).run(async (image) => ({
+      full: await image.toImageData(),
+      thumb: await image.resize({ width: 4 }).toImageData(),
+    }))
+    expect(results[0]!.ok).toBe(true)
+    if (results[0]!.ok) {
+      expect(results[0]!.value.full.width).toBe(16)
+      expect(results[0]!.value.thumb.width).toBe(4)
+    }
+  })
+
+  test('a throwing output fails only its item', async () => {
+    stubImageData()
+    const results = await batch([source(), source()]).run((image, index) => {
+      if (index === 0) throw new Error('encode failed')
+      return image.toImageData()
+    })
+    expect(results.map((r) => r.ok)).toEqual([false, true])
+  })
+
+  test('honors the abort signal', async () => {
+    stubImageData()
+    const controller = new AbortController()
+    controller.abort()
+    await expect(
+      batch([source()]).run((image) => image.toImageData(), { signal: controller.signal }),
+    ).rejects.toMatchObject({ name: 'AbortError' })
+  })
+})
+
 describe('concurrency bounds', () => {
   test('clamps to at least 1 and processes everything', async () => {
     stubImageData()
