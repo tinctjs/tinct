@@ -15,6 +15,19 @@ import type { PixelData } from './pixel'
  */
 export type FilterOptions = Record<string, unknown>
 
+/**
+ * An auxiliary input texture for a filter's fragment shader. Bound to a
+ * texture unit and exposed as `uniform sampler2D <name>` alongside
+ * `u_image`. Sampling is nearest-neighbour unless `linear` is set.
+ */
+export interface FilterTexture {
+  /** Sampler uniform name in the fragment source, e.g. `'u_sticker'`. */
+  name: string
+  pixels: PixelData
+  /** Bilinear sampling — use when the texture is scaled or rotated. */
+  linear?: boolean
+}
+
 /** Internal access to a filter's definition. Not part of the public API. */
 export const FILTER_DEFINITION: unique symbol = Symbol('imagepipe.filter.definition')
 
@@ -62,15 +75,31 @@ export interface FilterDefinition<TOptions extends FilterOptions = FilterOptions
   /** Maps filter options to values for the shader's custom uniforms. */
   uniforms?: (options: Readonly<TOptions>) => Record<string, number | readonly number[]>
   /**
+   * Maps filter options to auxiliary input textures for `fragment` (sticker
+   * pixels, lookup tables). Each is bound as `uniform sampler2D <name>`.
+   * The CPU `fallback` reads the same pixels from its options instead.
+   */
+  textures?: (options: Readonly<TOptions>) => FilterTexture[]
+  /**
+   * Sample `u_image` bilinearly in `fragment` (default: nearest). Set this
+   * on filters that sample between pixels — coordinate warps, scaled
+   * lookups — and mirror it with bilinear sampling in `fallback`.
+   */
+  linearSource?: boolean
+  /**
    * Advanced alternative to `fragment`: a multi-pass GPU program. Each pass
    * is a fragment shader (same contract as `fragment`) with its own uniform
-   * values; passes run in order, each reading the previous pass's output.
-   * Used by separable kernels like gaussian blur (horizontal then vertical).
-   * Takes precedence over `fragment` when both are present.
+   * values (plus optional `textures` and `linearSource`); passes run in
+   * order, each reading the previous pass's output. Used by separable
+   * kernels like gaussian blur (horizontal then vertical). Takes precedence
+   * over `fragment` when both are present.
    */
-  passes?: (
-    options: Readonly<TOptions>,
-  ) => { fragment: string; uniforms: Record<string, number | readonly number[]> }[]
+  passes?: (options: Readonly<TOptions>) => {
+    fragment: string
+    uniforms: Record<string, number | readonly number[]>
+    textures?: readonly FilterTexture[]
+    linearSource?: boolean
+  }[]
   /** Default options, merged under the options given at the call site. */
   defaults?: Partial<TOptions>
 }

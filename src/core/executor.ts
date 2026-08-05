@@ -160,6 +160,8 @@ export function toGpuPass(node: OpNode): QueuedPass | null {
           {
             fragment: definition.fragment,
             uniforms: definition.uniforms ? definition.uniforms(options) : {},
+            textures: definition.textures?.(options),
+            linearSource: definition.linearSource,
           },
         ],
         cpu,

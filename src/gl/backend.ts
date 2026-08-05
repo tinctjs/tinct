@@ -8,6 +8,7 @@
  */
 
 import type { PixelData } from '../core/pixel'
+import type { FilterTexture } from '../core/filter'
 import { getWebgl2Backend } from './renderer'
 
 /** @internal One fullscreen fragment pass with its uniform values. */
@@ -19,6 +20,13 @@ export interface GpuPass {
    * 9 numbers → `uniformMatrix3fv` (row-major input, transposed on upload).
    */
   uniforms: Record<string, number | readonly number[]>
+  /**
+   * Additional input textures, bound to texture units 1..N and exposed to
+   * the fragment as `uniform sampler2D <name>`. Unit 0 stays `u_image`.
+   */
+  textures?: readonly FilterTexture[] | undefined
+  /** Sample `u_image` bilinearly in this pass (default: nearest). */
+  linearSource?: boolean | undefined
 }
 
 /**

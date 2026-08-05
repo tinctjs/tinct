@@ -86,6 +86,7 @@ function run(state: GlState, pixels: PixelData, passes: readonly GpuPass[]): Pix
 
   let source: WebGLTexture | null = null
   let target: WebGLTexture | null = null
+  const auxTextures: WebGLTexture[] = []
   const fbo = gl.createFramebuffer()
 
   try {
@@ -106,7 +107,29 @@ function run(state: GlState, pixels: PixelData, passes: readonly GpuPass[]): Pix
 
       gl.activeTexture(gl.TEXTURE0)
       gl.bindTexture(gl.TEXTURE_2D, source)
+      const filter = pass.linearSource ? gl.LINEAR : gl.NEAREST
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter)
       gl.uniform1i(gl.getUniformLocation(program, 'u_image'), 0)
+
+      // Auxiliary textures (stickers, LUTs) on units 1..N.
+      for (let unit = 0; unit < (pass.textures?.length ?? 0); unit++) {
+        const aux = pass.textures![unit]!
+        if (aux.pixels.width > state.maxTextureSize || aux.pixels.height > state.maxTextureSize) {
+          return null
+        }
+        gl.activeTexture(gl.TEXTURE1 + unit)
+        const texture = createTexture(gl, aux.pixels.width, aux.pixels.height, aux.pixels.data)
+        if (!texture) return null
+        auxTextures.push(texture)
+        if (aux.linear) {
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+        }
+        gl.uniform1i(gl.getUniformLocation(program, aux.name), 1 + unit)
+      }
+      gl.activeTexture(gl.TEXTURE0)
+
       const resolution = gl.getUniformLocation(program, 'u_resolution')
       if (resolution) gl.uniform2f(resolution, width, height)
       setUniforms(gl, program, pass.uniforms)
@@ -131,6 +154,7 @@ function run(state: GlState, pixels: PixelData, passes: readonly GpuPass[]): Pix
     gl.deleteFramebuffer(fbo)
     if (source) gl.deleteTexture(source)
     if (target) gl.deleteTexture(target)
+    for (const texture of auxTextures) gl.deleteTexture(texture)
   }
 }
 

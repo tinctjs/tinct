@@ -19,7 +19,13 @@
 export { imagepipe } from './core/imagepipe'
 export { ImagePipe } from './core/editor'
 export { defineFilter } from './core/filter'
-export type { Filter, FilterDefinition, FilterFactory, FilterOptions } from './core/filter'
+export type {
+  Filter,
+  FilterDefinition,
+  FilterFactory,
+  FilterOptions,
+  FilterTexture,
+} from './core/filter'
 export type { PixelData } from './core/pixel'
 export type {
   AdjustOptions,
