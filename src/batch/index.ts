@@ -145,6 +145,27 @@ export class ImageBatch {
   }
 
   /**
+   * Process every image with a custom output — for flows that need more
+   * than one artifact per item (say, a compressed blob *and* a small
+   * `ImageData` for a placeholder hash) without loading the file twice.
+   * Same failure/abort semantics as {@link toBlobs}.
+   *
+   * @example
+   * ```ts
+   * const results = await batch(files).run(async (image) => ({
+   *   blob: await image.resize({ width: 1600 }).toBlob({ format: 'webp' }),
+   *   thumb: await image.resize({ width: 96 }).toImageData(),
+   * }))
+   * ```
+   */
+  run<T>(
+    output: (image: ImagePipe, index: number) => T | Promise<T>,
+    options?: RenderOptions,
+  ): Promise<BatchResult<T>[]> {
+    return this.#run(async (image, index) => await output(image, index), options?.signal)
+  }
+
+  /**
    * @internal
    * Concurrency-limited runner. Item failures are isolated into `ok: false`
    * results; an abort is a whole-batch stop and rejects the returned
